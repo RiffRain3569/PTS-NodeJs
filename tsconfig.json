@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "target": "es2022",
+        "module": "commonjs",
+        "outDir": "./dist",
+        "rootDir": ".",
+        "baseUrl": "./src",
+        "paths": {},
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "isolatedModules": true,
+        "strict": true,
+        "moduleResolution": "node",
+        "skipLibCheck": true
+    },
+    "include": ["src/app.ts", "src/*/*.d.ts"],
+    "exclude": ["node_modules"]
+}
