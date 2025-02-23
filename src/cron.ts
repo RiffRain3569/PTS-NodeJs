@@ -4,7 +4,10 @@ import cron from 'node-cron';
 export const testCron = () => {
     // 6시 1분 변동률 상위 5개 매수
     cron.schedule('* * * * *', () => {
-        fetch(`${HOST}:${PORT}/bithumb/market/top5`);
+        const host = process.env.HOST;
+        const port = process.env.PORT;
+        console.log(`${host}:${port}/bithumb/market/top5`);
+        fetch(`${host}:${port}/bithumb/market/top5`);
     });
 };
 

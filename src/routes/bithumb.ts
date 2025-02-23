@@ -3,7 +3,7 @@ import { Router } from 'express';
 
 const router = Router();
 
-router.post('/market/top5', async (req, res) => {
+router.get('/market/top5', async (req, res) => {
     const markets = (await getMarket({})).filter((el: any) => el.market.split('-').at(0) === 'KRW');
     const tickers = await getTicker({ markets: (markets || []).map((coin: any) => coin.market).join(',') });
 
