@@ -1,4 +1,4 @@
-import { GET } from '@/config/httpMethod';
+import { DELETE, GET } from '@/config/httpMethod';
 import axios, { AxiosError } from 'axios';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
@@ -98,8 +98,8 @@ export const bithumbPrivateApi = async ({
             'Service-Type': 'api',
         },
 
-        data: method !== GET && reqData ? reqData : '',
-        params: method === GET && reqData ? reqData : '',
+        data: method !== GET && method !== DELETE && reqData ? reqData : '',
+        params: (method === GET || method === DELETE) && reqData ? reqData : '',
         paramsSerializer: {
             encode: parse,
             serialize: (params) => stringify(params, { arrayFormat: 'repeat' }),

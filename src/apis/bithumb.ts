@@ -1,4 +1,4 @@
-import { GET, POST } from '@/config/httpMethod';
+import { DELETE, GET, POST } from '@/config/httpMethod';
 import { bithumbPrivateApi, bithumbPublicApi } from './fetchers/bithumb';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,6 +85,52 @@ export const getOrderBook = async ({
         uri: `/v1/orderbook`,
         method: GET,
         reqData: { markets: markets.join(',') },
+        apiKey,
+        secret,
+    });
+};
+
+type OrderListTypes = {
+    market?: string;
+    uuids?: string[];
+    state?: 'wait' | 'watch' | 'done' | 'cancel';
+    states?: ('wait' | 'watch' | 'done' | 'cancel')[];
+    page?: number;
+    limit?: number;
+    order_by?: 'asc' | 'desc';
+    apiKey: string;
+    secret: string;
+};
+
+export const getOrderList = async ({
+    apiKey,
+    secret,
+    // state = 'wait',
+    // page = 1,
+    // limit = 100,
+    // order_by = 'desc',
+    ...rest
+}: OrderListTypes) => {
+    return await bithumbPrivateApi({
+        uri: `/v1/orders`,
+        method: GET,
+        reqData: { ...rest },
+        apiKey,
+        secret,
+    });
+};
+
+type DeleteOrderTypes = {
+    uuid: string;
+    apiKey: string;
+    secret: string;
+};
+
+export const deleteOrder = async ({ apiKey, secret, ...rest }: DeleteOrderTypes) => {
+    return await bithumbPrivateApi({
+        uri: `/v1/order`,
+        method: DELETE,
+        reqData: { ...rest },
         apiKey,
         secret,
     });
