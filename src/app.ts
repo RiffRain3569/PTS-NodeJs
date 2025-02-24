@@ -1,16 +1,14 @@
+import { envMiddleware } from './middleware/env';
+envMiddleware();
+
 import { testCron, tradingStrategy1 } from '@/cron';
 import bithumbRouter from '@/routes/bithumb';
 import express, { Request, Response } from 'express';
 import figlet from 'figlet';
-
-import dotenv from 'dotenv';
-import { HOST, PORT } from './config/info';
-
-dotenv.config();
+import { PORT } from './config/info';
 
 const app = express();
-const port = process.env.PORT || 3030;
-console.log(process.env.HOST, process.env.PORT, HOST, PORT);
+const port = PORT || 3030;
 
 app.get('/', (req: Request, res: Response) => {
     res.send('ok');
