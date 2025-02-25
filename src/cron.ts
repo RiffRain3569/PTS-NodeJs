@@ -25,7 +25,7 @@ export const notiCron = () => {
         const copy = test.data
             .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
             .join(`\n----\n`);
-        console.log(copy);
+        send(copy);
     });
 
     // 13시 1분 변동률 상위 5개 조회
@@ -35,7 +35,7 @@ export const notiCron = () => {
         const copy = test.data
             .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
             .join(`\n----\n`);
-        console.log(copy);
+        send(copy);
     });
 
     // 22시 1분 변동률 상위 5개 조회
@@ -45,7 +45,7 @@ export const notiCron = () => {
         const copy = test.data
             .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
             .join(`\n----\n`);
-        console.log(copy);
+        send(copy);
     });
 };
 
