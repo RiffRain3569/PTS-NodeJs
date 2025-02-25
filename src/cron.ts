@@ -1,17 +1,39 @@
 import { HOST, PORT } from '@/config/info';
 import axios from 'axios';
 import cron from 'node-cron';
+import { send } from './config/telegram';
 
 export const testCron = () => {
-    // let test: any = [];
-    // // 6시 1분 변동률 상위 5개 매수
-    // cron.schedule('10 22 * * * *', async () => {
-    //     test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
-    //     console.log('test: ', test.data);
-    // });
-    // cron.schedule('58 * * * *', () => {
-    //     console.log('test: ', test.data);
-    // });
+    let test: any = [];
+
+    cron.schedule('40 57 * * * *', async () => {
+        test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
+        send(JSON.stringify(test.data, null, 4));
+        console.log('test: ', test.data);
+    });
+    cron.schedule('58 * * * *', () => {
+        console.log('test: ', test.data);
+    });
+};
+
+export const notiCron = () => {
+    // 6시 1분 변동률 상위 5개 조회
+    cron.schedule('1 6 * * *', async () => {
+        const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
+        send(JSON.stringify(test.data, null, 4));
+    });
+
+    // 13시 1분 변동률 상위 5개 조회
+    cron.schedule('1 13 * * *', async () => {
+        const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
+        send(JSON.stringify(test.data, null, 4));
+    });
+
+    // 22시 1분 변동률 상위 5개 조회
+    cron.schedule('1 22 * * *', async () => {
+        const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
+        send(JSON.stringify(test.data, null, 4));
+    });
 };
 
 /**
