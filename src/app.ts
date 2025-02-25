@@ -1,4 +1,4 @@
-import { envMiddleware } from './middleware/env';
+import { envMiddleware } from './global/middleware/env';
 envMiddleware();
 
 import { notiCron, testCron, tradingStrategy1 } from '@/cron';
@@ -6,6 +6,8 @@ import bithumbRouter from '@/routes/bithumb';
 import express, { Request, Response } from 'express';
 import figlet from 'figlet';
 import { PORT } from './config/info';
+import { responseFormatMiddleware } from './global/middleware/format';
+import { entryPointLoggingMiddleware, uuidMiddleware } from './global/middleware/logging';
 
 const app = express();
 const port = PORT || 3030;
@@ -15,6 +17,10 @@ app.use(express.json());
 
 // URL-encoded 요청을 처리하기 위한 미들웨어 (form data 지원)
 app.use(express.urlencoded({ extended: true }));
+
+app.use(uuidMiddleware); // UUID 설정 미들웨어
+app.use(entryPointLoggingMiddleware); // route start log 미들웨어
+app.use(responseFormatMiddleware); // success, fail 포맷 설정
 
 app.get('/', (req: Request, res: Response) => {
     console.log(req.body);
