@@ -1,7 +1,7 @@
 import { envMiddleware } from './middleware/env';
 envMiddleware();
 
-import { notiCron, tradingStrategy1 } from '@/cron';
+import { notiCron, testCron, tradingStrategy1 } from '@/cron';
 import bithumbRouter from '@/routes/bithumb';
 import express, { Request, Response } from 'express';
 import figlet from 'figlet';
@@ -23,7 +23,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/bithumb', bithumbRouter); // API 관련 라우트
 
-// testCron();
+testCron();
 notiCron();
 tradingStrategy1();
 

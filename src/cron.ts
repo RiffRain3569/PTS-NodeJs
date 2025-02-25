@@ -4,16 +4,17 @@ import cron from 'node-cron';
 import { send } from './config/telegram';
 
 export const testCron = () => {
-    let test: any = [];
-
-    cron.schedule('40 57 * * * *', async () => {
-        test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
-        send(JSON.stringify(test.data, null, 4));
-        console.log('test: ', test.data);
-    });
-    cron.schedule('58 * * * *', () => {
-        console.log('test: ', test.data);
-    });
+    // let test: any = [];
+    // cron.schedule('35 24 * * * *', async () => {
+    //     test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
+    //     const copy = test.data
+    //         .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
+    //         .join(`\n----\n`);
+    //     console.log('test: ', copy);
+    // });
+    // cron.schedule('58 * * * *', () => {
+    //     console.log('test: ', test.data);
+    // });
 };
 
 export const notiCron = () => {
@@ -21,18 +22,30 @@ export const notiCron = () => {
     cron.schedule('1 6 * * *', async () => {
         const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
         send(JSON.stringify(test.data, null, 4));
+        const copy = test.data
+            .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
+            .join(`\n----\n`);
+        console.log(copy);
     });
 
     // 13시 1분 변동률 상위 5개 조회
     cron.schedule('1 13 * * *', async () => {
         const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
         send(JSON.stringify(test.data, null, 4));
+        const copy = test.data
+            .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
+            .join(`\n----\n`);
+        console.log(copy);
     });
 
     // 22시 1분 변동률 상위 5개 조회
     cron.schedule('1 22 * * *', async () => {
         const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
         send(JSON.stringify(test.data, null, 4));
+        const copy = test.data
+            .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
+            .join(`\n----\n`);
+        console.log(copy);
     });
 };
 
