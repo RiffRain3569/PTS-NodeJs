@@ -2,10 +2,10 @@ import { envMiddleware } from './global/middleware/env';
 envMiddleware();
 
 import { notiCron, testCron, tradingStrategy1 } from '@/cron';
+import { PORT } from '@/global/config/info';
 import bithumbRouter from '@/routes/bithumb';
 import express, { Request, Response } from 'express';
 import figlet from 'figlet';
-import { PORT } from './config/info';
 import { responseFormatMiddleware } from './global/middleware/format';
 import { entryPointLoggingMiddleware, uuidMiddleware } from './global/middleware/logging';
 

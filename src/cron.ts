@@ -1,7 +1,7 @@
-import { HOST, PORT } from '@/config/info';
+import { HOST, PORT } from '@/global/config/info';
+import { send } from '@/global/config/telegram';
 import axios from 'axios';
 import cron from 'node-cron';
-import { send } from './config/telegram';
 
 export const testCron = () => {
     // let test: any = [];

@@ -1,4 +1,4 @@
-import { decrypt, encrypt } from '@/utils/envCrypto';
+import { decrypt, encrypt } from '@/global/utils/envCrypto';
 import dotenv from 'dotenv';
 
 export const envMiddleware = () => {
