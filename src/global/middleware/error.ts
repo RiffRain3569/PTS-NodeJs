@@ -1,4 +1,4 @@
-const { logger } = require('@logger');
+import { logger } from '@/global/middleware/logger';
 
 // 경로 에러 핸들링
 export const pathErrorMiddleware = (req: any, res: any, next: any) => {
