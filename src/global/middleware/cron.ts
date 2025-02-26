@@ -5,7 +5,14 @@ import cron from 'node-cron';
 
 export const testCron = () => {
     // let test: any = [];
-    // cron.schedule('35 24 * * * *', async () => {
+    // cron.schedule('30 51 * * * *', async () => {
+    //     test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
+    //     const copy = test.data
+    //         .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
+    //         .join(`\n----\n`);
+    //     console.log('test: ', copy);
+    // });
+    // cron.schedule('30 51 * * * *', async () => {
     //     test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
     //     const copy = test.data
     //         .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
@@ -19,7 +26,7 @@ export const testCron = () => {
 
 export const notiCron = () => {
     // 6시 1분 변동률 상위 5개 조회
-    cron.schedule('1 6 * * *', async () => {
+    cron.schedule('57 17 * * *', async () => {
         const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
         send(JSON.stringify(test.data, null, 4));
         const copy = test.data
@@ -30,6 +37,16 @@ export const notiCron = () => {
 
     // 13시 1분 변동률 상위 5개 조회
     cron.schedule('1 13 * * *', async () => {
+        const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
+        send(JSON.stringify(test.data, null, 4));
+        const copy = test.data
+            .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
+            .join(`\n----\n`);
+        send(copy);
+    });
+
+    // 21시 1분 변동률 상위 5개 조회
+    cron.schedule('1 21 * * *', async () => {
         const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
         send(JSON.stringify(test.data, null, 4));
         const copy = test.data
@@ -69,10 +86,11 @@ export const tradingStrategy1 = () => {
     // 15% 매도 걸기
     cron.schedule('2 6 * * *', async () => {
         // const testMarkets = [
-        //     { market: 'KRW-KAITO', trade_price: 2471 },
-        //     { market: 'KRW-OBSR', trade_price: 3.709 },
-        //     { market: 'KRW-TEMCO', trade_price: 2.707 },
-        //     { market: 'KRW-APM', trade_price: 6.351 },
+        //     { market: 'KRW-KAITO', trade_price: 2772 },
+        //     { market: 'KRW-IP', trade_price: 9380 },
+        //     { market: 'KRW-STPT', trade_price: 169 },
+        //     { market: 'KRW-TIA', trade_price: 5620 },
+        //     { market: 'KRW-LPT', trade_price: 10390 },
         // ];
         uuids = (await axios.post(`${HOST}:${PORT}/bithumb/order/ask/limit`, { markets })).data;
         console.log(`${uuids.join(', ')} 매도 예약 완료 했습니다.`);
@@ -90,4 +108,10 @@ export const tradingStrategy1 = () => {
         console.log(`${waitingMarket.map(({ market }: any) => market).join(', ')} 매도 완료 했습니다.`);
         send(`${waitingMarket.map(({ market }: any) => market).join(', ')} 매도 완료 했습니다.`);
     });
+};
+
+export const cronMiddleware = () => {
+    testCron();
+    notiCron();
+    tradingStrategy1();
 };

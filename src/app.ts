@@ -1,12 +1,12 @@
 import { envMiddleware } from './global/middleware/env';
 envMiddleware();
 
-import { notiCron, tradingStrategy1 } from '@/cron';
 import { PORT } from '@/global/config/info';
+import { cronMiddleware } from '@/global/middleware/cron';
+import { entryPointLoggingMiddleware, uuidMiddleware } from '@/global/middleware/logging';
 import bithumbRouter from '@/routes/bithumb';
 import express, { Request, Response } from 'express';
 import figlet from 'figlet';
-import { entryPointLoggingMiddleware, uuidMiddleware } from './global/middleware/logging';
 
 const app = express();
 const port = PORT || 3030;
@@ -21,9 +21,7 @@ app.use(uuidMiddleware); // UUID 설정 미들웨어
 app.use(entryPointLoggingMiddleware); // route start log 미들웨어
 // app.use(responseFormatMiddleware); // success, fail 포맷 설정
 
-// testCron();
-notiCron();
-tradingStrategy1();
+cronMiddleware();
 
 app.get('/', (req: Request, res: Response) => {
     console.log(req.body);

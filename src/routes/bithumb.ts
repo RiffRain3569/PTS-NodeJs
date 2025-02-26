@@ -93,7 +93,7 @@ router.post('/order/ask', async (req, res) => {
     const secret = process.env.SECRET_KEY as string;
     const markets = req.body.markets;
 
-    for (const { market } of markets) {
+    for (const market of markets) {
         const data = await getOrder({ market, apiKey, secret });
 
         const askOkBalance = Number(data?.ask_account?.balance);
@@ -121,13 +121,14 @@ export default router;
 const getMarkets = async () => {
     const markets = (await getMarket({})).filter((el: any) => el.market.split('-').at(0) === 'KRW');
     const tickers = await getTicker({ markets: (markets || []).map((coin: any) => coin.market).join(',') });
+    const ignoreMarkets = ['KRW-NFT', 'KRW-BTT', 'KRW-USDT', 'KRW-USDC', 'KRW-SKY'];
 
     const mergedList = Object.values(
         [...markets, ...tickers].reduce((acc, item) => {
             acc[item.market] = { ...acc[item.market], ...item };
             return acc;
         }, {})
-    ).filter((el: any) => el.market !== 'KRW-NFT' && el.market !== 'KRW-BTT');
+    ).filter((el: any) => !ignoreMarkets.includes(el.market));
 
     const sortedList = mergedList.sort((a: any, b: any) => b.signed_change_rate - a.signed_change_rate);
 
