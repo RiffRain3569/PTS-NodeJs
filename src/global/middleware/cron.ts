@@ -26,7 +26,7 @@ export const testCron = () => {
 
 export const notiCron = () => {
     // 6시 1분 변동률 상위 5개 조회
-    cron.schedule('57 17 * * *', async () => {
+    cron.schedule('1 6 * * *', async () => {
         const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
         send(JSON.stringify(test.data, null, 4));
         const copy = test.data
@@ -37,6 +37,16 @@ export const notiCron = () => {
 
     // 13시 1분 변동률 상위 5개 조회
     cron.schedule('1 13 * * *', async () => {
+        const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
+        send(JSON.stringify(test.data, null, 4));
+        const copy = test.data
+            .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
+            .join(`\n----\n`);
+        send(copy);
+    });
+
+    // 19시 1분 변동률 상위 5개 조회
+    cron.schedule('1 19 * * *', async () => {
         const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
         send(JSON.stringify(test.data, null, 4));
         const copy = test.data
