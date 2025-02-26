@@ -1,7 +1,7 @@
 import { envMiddleware } from './global/middleware/env';
 envMiddleware();
 
-import { notiCron } from '@/cron';
+import { notiCron, tradingStrategy1 } from '@/cron';
 import { PORT } from '@/global/config/info';
 import bithumbRouter from '@/routes/bithumb';
 import express, { Request, Response } from 'express';
@@ -23,7 +23,7 @@ app.use(entryPointLoggingMiddleware); // route start log 미들웨어
 
 // testCron();
 notiCron();
-// tradingStrategy1();
+tradingStrategy1();
 
 app.get('/', (req: Request, res: Response) => {
     console.log(req.body);
