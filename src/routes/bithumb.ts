@@ -25,6 +25,9 @@ router.post('/order/bid/top5', async (req, res) => {
 
     const krwPerMarket = Math.floor(krw / markets.length);
 
+    if (krwPerMarket < 5000) {
+        throw { error: 'NOT_ENOUGH_KRW', message: 'KRW가 부족합니다.' };
+    }
     for (const { market } of markets) {
         const data = await getOrder({ market, apiKey, secret });
 

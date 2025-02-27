@@ -3,77 +3,21 @@ import { send } from '@/global/config/telegram';
 import axios from 'axios';
 import cron from 'node-cron';
 
-export const testCron = () => {
-    // let test: any = [];
-    // cron.schedule('30 51 * * * *', async () => {
-    //     test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
-    //     const copy = test.data
-    //         .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
-    //         .join(`\n----\n`);
-    //     console.log('test: ', copy);
-    // });
-    // cron.schedule('30 51 * * * *', async () => {
-    //     test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
-    //     const copy = test.data
-    //         .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
-    //         .join(`\n----\n`);
-    //     console.log('test: ', copy);
-    // });
-    // cron.schedule('58 * * * *', () => {
-    //     console.log('test: ', test.data);
-    // });
-};
-
+/**
+ * 2시 - 21시 사이 1시간 마다 변동률 상위 5개 조회
+ */
 export const notiCron = () => {
-    // 6시 1분 변동률 상위 5개 조회
-    cron.schedule('1 6 * * *', async () => {
-        const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
-        send(JSON.stringify(test.data, null, 4));
-        const copy = test.data
-            .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
-            .join(`\n----\n`);
-        send(copy);
-    });
-
-    // 13시 1분 변동률 상위 5개 조회
-    cron.schedule('1 13 * * *', async () => {
-        const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
-        send(JSON.stringify(test.data, null, 4));
-        const copy = test.data
-            .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
-            .join(`\n----\n`);
-        send(copy);
-    });
-
-    // 19시 1분 변동률 상위 5개 조회
-    cron.schedule('1 19 * * *', async () => {
-        const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
-        send(JSON.stringify(test.data, null, 4));
-        const copy = test.data
-            .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
-            .join(`\n----\n`);
-        send(copy);
-    });
-
-    // 21시 1분 변동률 상위 5개 조회
-    cron.schedule('1 21 * * *', async () => {
-        const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
-        send(JSON.stringify(test.data, null, 4));
-        const copy = test.data
-            .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
-            .join(`\n----\n`);
-        send(copy);
-    });
-
-    // 22시 1분 변동률 상위 5개 조회
-    cron.schedule('1 22 * * *', async () => {
-        const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
-        send(JSON.stringify(test.data, null, 4));
-        const copy = test.data
-            .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
-            .join(`\n----\n`);
-        send(copy);
-    });
+    for (let i = 2; i < 22; i++) {
+        // 변동률 상위 5개 조회
+        cron.schedule(`1 ${i} * * *`, async () => {
+            const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
+            send(JSON.stringify(test.data, null, 4));
+            const copy = test.data
+                .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
+                .join(`\n----\n`);
+            send(copy);
+        });
+    }
 };
 
 /**
@@ -86,11 +30,14 @@ export const tradingStrategy1 = () => {
     let uuids: string[] = [];
 
     // 6시 1분 변동률 상위 5개 매수
-    cron.schedule('1 6 * * *', async () => {
-        markets = (await axios.post(`${HOST}:${PORT}/bithumb/order/bid/top5`)).data;
-        console.log(markets);
-        console.log(`${markets.map(({ korean_name }: any) => korean_name).join(', ')} 매수 완료 했습니다.`);
-        send(`${markets.map(({ korean_name }: any) => korean_name).join(', ')} 매수 완료 했습니다.`);
+    cron.schedule('50 53 * * * *', async () => {
+        try {
+            markets = (await axios.post(`${HOST}:${PORT}/bithumb/order/bid/top5`)).data;
+            console.log(`${markets.map(({ korean_name }: any) => korean_name).join(', ')} 매수 완료 했습니다.`);
+            send(`${markets.map(({ korean_name }: any) => korean_name).join(', ')} 매수 완료 했습니다.`);
+        } catch (error) {
+            send(JSON.stringify(error, null, 4));
+        }
     });
 
     // 15% 매도 걸기
@@ -121,7 +68,6 @@ export const tradingStrategy1 = () => {
 };
 
 export const cronMiddleware = () => {
-    testCron();
     notiCron();
-    tradingStrategy1();
+    // tradingStrategy1();
 };
