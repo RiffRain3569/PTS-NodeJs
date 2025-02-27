@@ -1,4 +1,4 @@
-import { envMiddleware } from './global/middleware/env';
+import { envMiddleware } from '@/global/middleware/env';
 envMiddleware();
 
 import { PORT } from '@/global/config/info';

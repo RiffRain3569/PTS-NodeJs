@@ -1,13 +1,12 @@
 {
-    "name": "trading-api-backend",
+    "name": "PTS-NodeJs",
     "version": "1.0.0",
-    "description": "Backend Server for TradingApi-NextJs project",
-    "main": "index.js",
+    "description": "noti exchange coin info",
+    "main": "app.ts",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "build": "tsc -b",
-        "start": "node dist/src/app.js",
-        "dev": "nodemon --exec \"ts-node\"  -r tsconfig-paths/register ./src/app.ts"
+        "dev": "nodemon --exec \"ts-node\"  -r tsconfig-paths/register ./src/app.ts",
+        "build": "tsc",
+        "start": "node -r module-alias/register ./dist/src/app.js"
     },
     "keywords": [],
     "author": "",
@@ -29,6 +28,7 @@
         "express": "^4.21.2",
         "figlet": "^1.8.0",
         "jsonwebtoken": "^9.0.2",
+        "module-alias": "^2.2.3",
         "node-cron": "^3.0.3",
         "node-telegram-bot-api": "^0.66.0",
         "nodemon": "^3.1.9",
@@ -38,5 +38,8 @@
         "typescript": "^5.7.3",
         "uuid": "^11.1.0",
         "winston": "^3.17.0"
+    },
+    "_moduleAliases": {
+        "@": "dist/src"
     }
 }

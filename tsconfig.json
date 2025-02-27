@@ -4,9 +4,9 @@
         "module": "commonjs",
         "outDir": "./dist",
         "rootDir": ".",
-        "baseUrl": "./src",
+        "baseUrl": "./",
         "paths": {
-            "@/*": ["./*"]
+            "@/*": ["./src/*"]
         },
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
@@ -15,6 +15,6 @@
         "moduleResolution": "node",
         "skipLibCheck": true
     },
-    "include": ["src/app.ts", "src/**/*.ts", "**/*.ts", "src/*/*.d.ts"],
+    "include": ["src/**/*.ts", "**/*.ts", "src/*/*.d.ts"],
     "exclude": ["node_modules"]
 }
