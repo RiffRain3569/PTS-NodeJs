@@ -32,7 +32,7 @@ export const tradingStrategy1 = () => {
     let uuids: string[] = [];
 
     // 6시 1분 변동률 상위 5개 매수
-    cron.schedule('50 53 * * * *', async () => {
+    cron.schedule('1 6 * * *', async () => {
         try {
             markets = (await axios.post(`${HOST}:${PORT}/bithumb/order/bid/top5`)).data;
             console.log(`${markets.map(({ korean_name }: any) => korean_name).join(', ')} 매수 완료 했습니다.`);
