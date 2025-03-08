@@ -3,7 +3,11 @@ import dotenv from 'dotenv';
 
 export const envMiddleware = () => {
     dotenv.config();
-    dotenv.config({ path: '.env.local', override: true });
+    if (process.env.NODE_ENV === 'production') {
+        dotenv.config({ path: '.env.production', override: true });
+    } else if (process.env.NODE_ENV === 'development') {
+        dotenv.config({ path: '.env.local', override: true });
+    }
 
     Object.entries(process.env).forEach(([key, value]) => {
         const trimValue = (value ?? '').trim();
