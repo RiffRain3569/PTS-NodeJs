@@ -16,6 +16,37 @@ router.get('/market/top5', async (req, res) => {
     res.json(await getMarkets());
 });
 
+router.post('/order/bid/top/:num', async (req, res) => {
+    const apiKey = process.env.API_KEY as string;
+    const secret = process.env.SECRET_KEY as string;
+    const markets = await getMarkets();
+
+    const krw = (await getAccount({ apiKey, secret })).find(({ currency }: any) => currency === 'KRW').balance;
+
+    const krwPerMarket = Math.floor(krw);
+
+    if (krwPerMarket < 5000) {
+        throw { error: 'NOT_ENOUGH_KRW', message: 'KRW가 부족합니다.' };
+    }
+
+    const targetMarket = markets.at(Number(req.params.num) - 1) ?? { market: '' };
+    const data = await getOrder({ market: targetMarket?.market, apiKey, secret });
+
+    const bidFee = data?.bid_fee;
+
+    const bidPrice = Math.floor(krwPerMarket) - Math.ceil(krwPerMarket * bidFee) - 1;
+    await postOrder({
+        market: targetMarket.market,
+        side: 'bid',
+        volume: '',
+        price: `${bidPrice}`,
+        ord_type: 'price',
+        apiKey,
+        secret,
+    });
+    res.json(targetMarket);
+});
+
 router.post('/order/bid/top5', async (req, res) => {
     const apiKey = process.env.API_KEY as string;
     const secret = process.env.SECRET_KEY as string;
@@ -51,13 +82,14 @@ router.post('/order/ask/limit', async (req, res) => {
     const apiKey = process.env.API_KEY as string;
     const secret = process.env.SECRET_KEY as string;
     const markets = req.body.markets;
+    const percent = Number(req.body.percent) ?? 0.15;
 
     let uuids = [];
     for (const { market, trade_price } of markets) {
         const data = await getOrder({ market, apiKey, secret });
 
         const askOkBalance = Number(data?.ask_account?.balance);
-        const price = `${unitFloor(trade_price * 1.15)}`;
+        const price = `${unitFloor(trade_price * (1 + percent))}`;
 
         const askVolume = askOkBalance;
         if (askOkBalance === 0) {
