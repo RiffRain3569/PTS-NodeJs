@@ -2,7 +2,7 @@ import { HOST, PORT } from '@/global/config/info';
 import { send } from '@/global/config/telegram';
 import axios from 'axios';
 import cron from 'node-cron';
-import { strategy2 } from './strategy2';
+import { two_hour } from './strategy2';
 
 /**
  * 1시 - 21시 사이 1시간 마다 변동률 상위 5개 조회
@@ -27,6 +27,9 @@ export const cronMiddleware = () => {
     if (process.env.NODE_ENV === 'production') {
         notiCron();
     } else {
-        strategy2();
+        two_hour({ bidClock: 3, top: 1, askPercent: 0.1 });
+        two_hour({ bidClock: 12, top: 2, askPercent: 0.1 });
+        two_hour({ bidClock: 18, top: 2, askPercent: 0.05 });
+        two_hour({ bidClock: 21, top: 5, askPercent: 0.05 });
     }
 };
