@@ -14,6 +14,7 @@ export const notiCron = () => {
         // 변동률 상위 5개 조회
         cron.schedule(`1 ${hour} * * *`, async () => {
             const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
+            console.log(JSON.stringify(test.data, null, 4));
             send(JSON.stringify(test.data, null, 4));
             const copy = test.data
                 .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
@@ -26,10 +27,10 @@ export const notiCron = () => {
 export const cronMiddleware = () => {
     if (process.env.NODE_ENV === 'production') {
         notiCron();
-    } else {
-        two_hour({ bidClock: 3, top: 1, askPercent: 0.1 });
-        two_hour({ bidClock: 12, top: 2, askPercent: 0.1 });
+        two_hour({ bidClock: 3, top: 1, askPercent: 0.05 });
+        two_hour({ bidClock: 12, top: 2, askPercent: 0.05 });
         two_hour({ bidClock: 18, top: 2, askPercent: 0.05 });
         two_hour({ bidClock: 21, top: 5, askPercent: 0.05 });
+    } else {
     }
 };
