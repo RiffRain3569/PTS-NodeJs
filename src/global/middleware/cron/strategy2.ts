@@ -18,9 +18,9 @@ export const two_hour = ({ hour, second = 0, top, askPercent }: Types) => {
         try {
             market = (await axios.post(`${HOST}:${PORT}/bithumb/order/bid/top/${top}`)).data;
             console.log(`${market.korean_name} 매수 완료 했습니다.`);
-            send(`${market.korean_name} 매수 완료 했습니다.`);
+            await send(`${market.korean_name} 매수 완료 했습니다.`);
         } catch (error) {
-            send(JSON.stringify(error, null, 4));
+            await send(JSON.stringify(error, null, 4));
         }
     });
 
@@ -31,7 +31,7 @@ export const two_hour = ({ hour, second = 0, top, askPercent }: Types) => {
             await axios.post(`${HOST}:${PORT}/bithumb/order/ask/limit`, { markets: [market], percent: askPercent })
         ).data;
         console.log(`${uuids.join(', ')} 매도 예약 완료 했습니다.`);
-        send(`${uuids.join(', ')} 매도 예약 완료 했습니다.`);
+        await send(`${uuids.join(', ')} 매도 예약 완료 했습니다.`);
     });
 
     // 2시간 후 예약된 매도 취소 후 전량 매도
@@ -43,6 +43,6 @@ export const two_hour = ({ hour, second = 0, top, askPercent }: Types) => {
             markets: waitingMarket.map(({ market }: any) => market),
         });
         console.log(`${waitingMarket.map(({ market }: any) => market).join(', ')} 매도 완료 했습니다.`);
-        send(`${waitingMarket.map(({ market }: any) => market).join(', ')} 매도 완료 했습니다.`);
+        await send(`${waitingMarket.map(({ market }: any) => market).join(', ')} 매도 완료 했습니다.`);
     });
 };

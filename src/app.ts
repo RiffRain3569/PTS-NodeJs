@@ -32,5 +32,6 @@ app.use('/bithumb', bithumbRouter); // API 관련 라우트
 
 app.listen(port, () => {
     console.log(figlet.textSync('PTS'));
+    console.log('env:', process.env.NODE_ENV);
     console.log(`Server listening on port ${port}`);
 });

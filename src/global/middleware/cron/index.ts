@@ -15,11 +15,7 @@ export const notiCron = () => {
         cron.schedule(`1 ${hour} * * *`, async () => {
             const test = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
             console.log(JSON.stringify(test.data, null, 4));
-            send(JSON.stringify(test.data, null, 4));
-            const copy = test.data
-                .map(({ korean_name, trade_price }: any) => `${korean_name}\n${trade_price}`)
-                .join(`\n----\n`);
-            send(copy);
+            await send(JSON.stringify(test.data, null, 4));
         });
     }
 };
