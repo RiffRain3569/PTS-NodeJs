@@ -13,8 +13,12 @@ export const notiCron = () => {
     for (const hour of hours) {
         // 변동률 상위 5개 조회
         cron.schedule(`1 ${hour} * * *`, async () => {
-            const markets = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
-            await send(JSON.stringify(markets.data, null, 4));
+            try {
+                const markets = await axios.get(`${HOST}:${PORT}/bithumb/market/top5`);
+                await send(JSON.stringify(markets.data, null, 4));
+            } catch (error) {
+                await send(JSON.stringify(error, null, 4));
+            }
         });
     }
 };
