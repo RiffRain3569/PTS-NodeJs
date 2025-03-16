@@ -28,9 +28,11 @@ export const cronMiddleware = () => {
     if (process.env.NODE_ENV === 'production') {
         notiCron();
     } else {
-        two_hour({ bidClock: 3, top: 1, askPercent: 0.05 });
-        two_hour({ bidClock: 12, top: 2, askPercent: 0.05 });
-        two_hour({ bidClock: 18, top: 2, askPercent: 0.05 });
-        two_hour({ bidClock: 21, top: 5, askPercent: 0.05 });
+        two_hour({ hour: 1, top: 2, askPercent: 0.01 });
+        two_hour({ hour: 3, second: 2, top: 1, askPercent: 0.02 });
+        two_hour({ hour: 5, second: 4, top: 1, askPercent: 0.01 });
+        two_hour({ hour: 10, top: 4, askPercent: 0.01 });
+        two_hour({ hour: 12, second: 2, top: 5, askPercent: 0.01 });
+        two_hour({ hour: 21, top: 5, askPercent: 0.02 });
     }
 };

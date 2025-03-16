@@ -83,13 +83,15 @@ router.post('/order/ask/limit', async (req, res) => {
     const secret = process.env.SECRET_KEY as string;
     const markets = req.body.markets;
     const percent = Number(req.body.percent) ?? 0.15;
+    const accounts = await getAccount({ apiKey, secret });
 
     let uuids = [];
-    for (const { market, trade_price } of markets) {
+    for (const { market } of markets) {
+        const avg_buy_price = accounts.find((el: any) => el.currency === market.split('-').at(1))?.avg_buy_price;
         const data = await getOrder({ market, apiKey, secret });
 
         const askOkBalance = Number(data?.ask_account?.balance);
-        const price = `${unitFloor(trade_price * (1 + percent))}`;
+        const price = `${unitFloor(avg_buy_price * (1 + percent))}`;
 
         const askVolume = askOkBalance;
         if (askOkBalance === 0) {
