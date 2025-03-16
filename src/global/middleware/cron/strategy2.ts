@@ -25,7 +25,7 @@ export const two_hour = ({ hour, second = 0, top, askPercent }: Types) => {
     });
 
     // 목표 매도 걸기
-    cron.schedule(`${second} 2 ${hour} * * *`, async () => {
+    cron.schedule(`${second + 2} 1 ${hour} * * *`, async () => {
         // const testMarkets = [ { market: 'KRW-KAITO', trade_price: 2772 } ];
         uuids = (
             await axios.post(`${HOST}:${PORT}/bithumb/order/ask/limit`, { markets: [market], percent: askPercent })
