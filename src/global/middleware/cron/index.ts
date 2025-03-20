@@ -48,22 +48,22 @@ export const cronMiddleware = () => {
         hold_hour({ hour: 16, second: 1, duringHour: 1, top: 5, askPercent: 0.02 });
         hold_hour({ hour: 17, second: 2, duringHour: 1, top: 5, askPercent: 0.02 });
         hold_hour({ hour: 18, second: 3, duringHour: 1, top: 5, askPercent: 0.05 });
-        hold_hour({ hour: 19, second: 4, duringHour: 1, top: 5, askPercent: 0.03 });
-        hold_hour({ hour: 20, second: 5, duringHour: 1, top: 5, askPercent: 0.05 });
+        hold_hour({ hour: 19, second: 4, duringHour: 1, top: 3, askPercent: 0.03 });
+        hold_hour({ hour: 20, second: 5, duringHour: 1, top: 3, askPercent: 0.05 });
         hold_hour({ hour: 21, second: 6, top: 5, askPercent: 0.02 });
     } else {
         logCron();
-        hold_hour({ hour: 1, second: 1, top: 3, askPercent: 0.05 });
-        hold_hour({ hour: 3, second: 2, top: 1, askPercent: 0.02 });
-        hold_hour({ hour: 5, second: 3, top: 1, askPercent: 0.05 });
-        hold_hour({ hour: 10, second: 1, top: 4, askPercent: 0.01 });
-        hold_hour({ hour: 12, second: 2, top: 5, askPercent: 0.01 });
+        // hold_hour({ hour: 1, second: 1, top: 3, askPercent: 0.05 });
+        // hold_hour({ hour: 3, second: 2, top: 1, askPercent: 0.02 });
+        // hold_hour({ hour: 5, second: 3, top: 1, askPercent: 0.05 });
+        // hold_hour({ hour: 10, second: 1, top: 4, askPercent: 0.01 });
+        // hold_hour({ hour: 12, second: 2, top: 5, askPercent: 0.01 });
 
-        hold_hour({ hour: 16, second: 1, duringHour: 1, top: 5, askPercent: 0.02 });
+        // hold_hour({ hour: 16, second: 1, duringHour: 1, top: 5, askPercent: 0.02 });
         // hold_hour({ hour: 17, second: 2, duringHour: 1, top: 5, askPercent: 0.02 });
-        hold_hour({ hour: 18, second: 2, duringHour: 1, top: 5, askPercent: 0.05 });
+        // hold_hour({ hour: 18, second: 2, duringHour: 1, top: 5, askPercent: 0.05 });
         // hold_hour({ hour: 19, second: 4, duringHour: 1, top: 5, askPercent: 0.03 });
-        hold_hour({ hour: 20, second: 3, duringHour: 1, top: 5, askPercent: 0.05 });
+        // hold_hour({ hour: 20, second: 3, duringHour: 1, top: 5, askPercent: 0.05 });
         // hold_hour({ hour: 21, second: 6, top: 5, askPercent: 0.02 });
     }
 };
