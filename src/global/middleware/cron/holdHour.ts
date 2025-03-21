@@ -30,11 +30,16 @@ export const hold_hour = ({ hour, second = 0, duringHour = 2, top, askPercent }:
     cron.schedule(`${second + 2} 1 ${hour} * * *`, async () => {
         try {
             // const testMarkets = [ { market: 'KRW-KAITO', trade_price: 2772 } ];
-            uuids = (
-                await axios.post(`${HOST}:${PORT}/bithumb/order/ask/limit`, { markets: [market], percent: askPercent })
-            ).data;
-            console.log(`${uuids.join(', ')} 매도 예약 완료 했습니다.`);
-            await send(`${uuids.join(', ')} 매도 예약 완료 했습니다.`);
+            if (!!market?.market) {
+                uuids = (
+                    await axios.post(`${HOST}:${PORT}/bithumb/order/ask/limit`, {
+                        markets: [market],
+                        percent: askPercent,
+                    })
+                ).data;
+                console.log(`${uuids.join(', ')} 매도 예약 완료 했습니다.`);
+                await send(`${uuids.join(', ')} 매도 예약 완료 했습니다.`);
+            }
         } catch (error) {
             await send('에러가 발생하였습니다.');
             console.log(error);
@@ -47,11 +52,15 @@ export const hold_hour = ({ hour, second = 0, duringHour = 2, top, askPercent }:
             const waitingMarket = (await axios.delete(`${HOST}:${PORT}/bithumb/order`)).data;
             console.log(waitingMarket.map(({ market }: any) => market));
 
-            await axios.post(`${HOST}:${PORT}/bithumb/order/ask`, {
-                markets: waitingMarket.map(({ market }: any) => market),
-            });
-            console.log(`${waitingMarket.map(({ market }: any) => market).join(', ')} 매도 완료 했습니다.`);
-            await send(`${waitingMarket.map(({ market }: any) => market).join(', ')} 매도 완료 했습니다.`);
+            if (waitingMarket.length !== 0) {
+                await axios.post(`${HOST}:${PORT}/bithumb/order/ask`, {
+                    markets: waitingMarket.map(({ market }: any) => market),
+                });
+                console.log(`${waitingMarket.map(({ market }: any) => market).join(', ')} 매도 완료 했습니다.`);
+                await send(`${waitingMarket.map(({ market }: any) => market).join(', ')} 매도 완료 했습니다.`);
+            } else {
+                console.log('매도할 종목이 없습니다.');
+            }
         } catch (error) {
             await send('에러가 발생하였습니다.');
             console.log(error);

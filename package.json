@@ -5,6 +5,7 @@
     "main": "app.ts",
     "scripts": {
         "dev": "NODE_ENV=development nodemon --exec \"ts-node\"  -r tsconfig-paths/register ./src/app.ts",
+        "clean": "rm -rf dist",
         "build": "tsc",
         "start": "NODE_ENV=production node -r module-alias/register ./dist/src/app.js"
     },
