@@ -37,18 +37,18 @@ export const logCron = () => {
 export const cronMiddleware = () => {
     if (process.env.NODE_ENV === 'production') {
         notiCron();
-        hold_hour({ hour: 1, second: 1, top: 3, askPercent: 0.05 });
-        hold_hour({ hour: 3, second: 3, top: 1, askPercent: 0.02 });
-        hold_hour({ hour: 5, second: 5, top: 1, askPercent: 0.05 });
-        hold_hour({ hour: 10, second: 1, top: 4, askPercent: 0.01 });
-        hold_hour({ hour: 12, second: 3, top: 5, askPercent: 0.01 });
+        hold_hour({ hour: 1, second: 2, top: 3, askPercent: 0.05 });
+        hold_hour({ hour: 3, second: 4, top: 1, askPercent: 0.02 });
+        hold_hour({ hour: 5, second: 6, top: 1, askPercent: 0.05 });
+        hold_hour({ hour: 10, second: 2, top: 4, askPercent: 0.01 });
+        hold_hour({ hour: 12, second: 4, top: 5, askPercent: 0.01 });
 
-        hold_hour({ hour: 16, second: 1, duringHour: 1, top: 5, askPercent: 0.02 });
-        hold_hour({ hour: 17, second: 3, duringHour: 1, top: 5, askPercent: 0.02 });
-        hold_hour({ hour: 18, second: 5, duringHour: 1, top: 5, askPercent: 0.05 });
-        hold_hour({ hour: 19, second: 7, duringHour: 1, top: 3, askPercent: 0.03 });
-        hold_hour({ hour: 20, second: 9, duringHour: 1, top: 3, askPercent: 0.05 });
-        hold_hour({ hour: 21, second: 11, top: 5, askPercent: 0.02 });
+        hold_hour({ hour: 16, second: 2, duringHour: 1, top: 5, askPercent: 0.02 });
+        hold_hour({ hour: 17, second: 4, duringHour: 1, top: 5, askPercent: 0.02 });
+        hold_hour({ hour: 18, second: 6, duringHour: 1, top: 5, askPercent: 0.05 });
+        hold_hour({ hour: 19, second: 8, duringHour: 1, top: 3, askPercent: 0.03 });
+        hold_hour({ hour: 20, second: 10, duringHour: 1, top: 3, askPercent: 0.05 });
+        hold_hour({ hour: 21, second: 12, top: 5, askPercent: 0.02 });
     } else {
         logCron();
         // hold_hour({ hour: 1, second: 1, top: 3, askPercent: 0.05 });
