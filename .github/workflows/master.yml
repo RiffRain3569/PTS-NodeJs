@@ -21,4 +21,14 @@ jobs:
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   port: 22
                   script: |
-                      whoami
+                      cd PTS-NodeJs 
+                      echo 'git pull'
+                      git pull
+
+                      echo 'npm install'
+                      npm ci
+
+                      echo 'npm start'
+                      npm run clean
+                      npm run build
+                      npm run start

@@ -7,7 +7,7 @@
         "dev": "NODE_ENV=development nodemon --exec \"ts-node\"  -r tsconfig-paths/register ./src/app.ts",
         "clean": "rm -rf dist",
         "build": "tsc",
-        "start": "NODE_ENV=production node -r module-alias/register ./dist/src/app.js"
+        "start": "pm2 start ecosystem.config.js"
     },
     "keywords": [],
     "author": "",
@@ -33,6 +33,7 @@
         "node-cron": "^3.0.3",
         "node-telegram-bot-api": "^0.66.0",
         "nodemon": "^3.1.9",
+        "pm2": "^6.0.5",
         "qs": "^6.14.0",
         "ts-node": "^10.9.2",
         "tsconfig-paths": "^4.2.0",
