@@ -6,6 +6,7 @@
     "scripts": {
         "dev": "NODE_ENV=development nodemon --exec \"ts-node\"  -r tsconfig-paths/register ./src/app.ts",
         "clean": "rm -rf dist",
+        "stop": "pm2 stop my-app",
         "build": "tsc",
         "start": "pm2 start ecosystem.config.js"
     },

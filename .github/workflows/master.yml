@@ -29,6 +29,7 @@ jobs:
                       npm ci
 
                       echo 'npm start'
+                      npm run stop
                       npm run clean
                       npm run build
                       npm run start
