@@ -7,7 +7,7 @@ module.exports = {
             env: {
                 NODE_ENV: 'production',
             },
-            watch: true,
+            watch: false,
             restart_delay: 5000, // 서버가 다운된 후 5초 뒤 재시작
             out_file: './logs/stdout.log',
             error_file: './logs/error.log',
