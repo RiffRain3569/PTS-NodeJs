@@ -42,7 +42,7 @@ export const cronMiddleware = () => {
         hold_hour({ hour: 10, second: 2, top: 5, askPercent: 0.05 });
         hold_hour({ hour: 13, second: 2, top: 5, askPercent: 0.02 });
         hold_hour({ hour: 17, second: 2, top: 4, askPercent: 0.05 });
-        hold_hour({ hour: 19, second: 4, top: 5, askPercent: 0.05 });
+        hold_hour({ hour: 19, second: 4, top: 5, askPercent: 0.06 });
         hold_hour({ hour: 21, second: 6, top: 5, askPercent: 0.02 });
     } else {
         logCron();
