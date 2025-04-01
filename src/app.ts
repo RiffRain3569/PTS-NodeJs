@@ -7,6 +7,8 @@ import { entryPointLoggingMiddleware, uuidMiddleware } from '@/global/middleware
 import bithumbRouter from '@/routes/bithumb';
 import express, { Request, Response } from 'express';
 import figlet from 'figlet';
+import { finalErrorMiddleware } from './global/middleware/error';
+import { responseFormatMiddleware } from './global/middleware/format';
 
 const app = express();
 const port = PORT || 3030;
@@ -19,7 +21,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(uuidMiddleware); // UUID 설정 미들웨어
 app.use(entryPointLoggingMiddleware); // route start log 미들웨어
-// app.use(responseFormatMiddleware); // success, fail 포맷 설정
+app.use(finalErrorMiddleware); // 에러 핸들링 미들웨어
+app.use(responseFormatMiddleware); // success, fail 포맷 설정
 
 cronMiddleware();
 

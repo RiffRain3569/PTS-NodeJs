@@ -27,7 +27,7 @@ export const hold_hour = ({ hour, second = 0, duringHour = 2, top, askPercent }:
     });
 
     // 목표 매도 걸기
-    cron.schedule(`${second + 2} 1 ${hour} * * *`, async () => {
+    cron.schedule(`${second + 5} 1 ${hour} * * *`, async () => {
         try {
             // const testMarkets = [ { market: 'KRW-KAITO', trade_price: 2772 } ];
             if (!!market?.market) {
