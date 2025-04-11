@@ -5,6 +5,7 @@ import { PORT } from '@/global/config/info';
 import { cronMiddleware } from '@/global/middleware/cron';
 import { entryPointLoggingMiddleware, uuidMiddleware } from '@/global/middleware/logging';
 import bithumbRouter from '@/routes/bithumb';
+import tradingviewRouter from '@/routes/tradingview';
 import express, { Request, Response } from 'express';
 import figlet from 'figlet';
 
@@ -30,6 +31,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.use('/bithumb', bithumbRouter); // API 관련 라우트
+app.use('/tradingview', tradingviewRouter); // API 관련 라우트
 
 app.listen(port, () => {
     console.log(figlet.textSync('PTS'));
