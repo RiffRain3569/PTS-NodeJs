@@ -157,11 +157,17 @@ export default router;
 
 const getMarkets = async () => {
     const markets = (await getMarket({})).filter((el: any) => el.market.split('-').at(0) === 'KRW');
-    const tickers = await getTicker({ markets: (markets || []).map((coin: any) => coin.market).join(',') });
+    const mid = Math.ceil(markets.length / 2); // 홀수도 고려해서 ceil 사용
+
+    // 길이 오류 때문에 분리
+    const tickers1 = await getTicker({
+        markets: (markets.slice(0, mid) || []).map((coin: any) => coin.market).join(','),
+    });
+    const tickers2 = await getTicker({ markets: (markets.slice(mid) || []).map((coin: any) => coin.market).join(',') });
     const ignoreMarkets = ['KRW-NFT', 'KRW-BTT', 'KRW-USDT', 'KRW-USDC'];
 
     const mergedList = Object.values(
-        [...markets, ...tickers].reduce((acc, item) => {
+        [...markets, ...tickers1, ...tickers2].reduce((acc, item) => {
             acc[item.market] = { ...acc[item.market], ...item };
             return acc;
         }, {})
