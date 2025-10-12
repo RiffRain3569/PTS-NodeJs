@@ -39,7 +39,7 @@ export const cronMiddleware = () => {
         notiCron();
         // hold_hour({ hour: 1, second: 2, top: 3, askPercent: 0.04 });
         // hold_hour({ hour: 3, second: 2, top: 5, askPercent: 0.05 });
-        hold_hour({ hour: 5, second: 2, top: 1, askPercent: 0.05 });
+        hold_hour({ hour: 5, second: 2, top: 1, askPercent: 0.1 });
         // hold_hour({ hour: 10, second: 2, top: 3, askPercent: 0.05 });
         // hold_hour({ hour: 13, second: 2, top: 5, askPercent: 0.02 });
         // hold_hour({ hour: 17, second: 2, top: 4, askPercent: 0.05 });
