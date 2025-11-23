@@ -68,15 +68,17 @@ router.post(
             // 동일 포지션이면 추가 주문
             const side: SideType = message === 'SHORT' ? 'sell' : 'buy';
             const orderPrice = side === 'sell' ? askPrice : bidPrice;
+            const size = (COST * leverage) / orderPrice;
             await postOrder({
                 symbol: blockchainSymbol,
                 productType: 'USDT-FUTURES',
                 marginMode: 'crossed',
                 marginCoin: 'USDT',
-                size: `${Math.round(((COST * leverage) / orderPrice) * 10000) / 10000}`,
+                size: `${Math.round(size * 10000) / 10000}`,
                 side: side,
                 tradeSide: 'open',
                 orderType: 'market',
+                presetStopLossPrice: `${Math.round(COST * 0.9 * 10000) / 10000}`,
             });
         }
 

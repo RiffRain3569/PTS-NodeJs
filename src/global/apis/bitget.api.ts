@@ -69,6 +69,7 @@ type PostOrderTypes = {
     orderType: 'limit' | 'market';
     force?: 'ioc' | 'fok' | 'gtc' | 'post_only'; // Required if the "orderType" is limit
     clientOid?: string;
+    presetStopLossPrice?: string;
 };
 
 export const postOrder = async ({ ...rest }: PostOrderTypes) => {
