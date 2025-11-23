@@ -1,4 +1,4 @@
-import { DELETE, GET } from '@/global/config/httpMethod';
+import { DELETE, GET } from '@/global/config/httpMethod.config';
 import axios, { AxiosError } from 'axios';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';

@@ -1,4 +1,4 @@
-import { logger } from '@/global/middleware/logger';
+import { logger } from '@/global/middleware/logger.middleware';
 
 // 경로 에러 핸들링
 export const pathErrorMiddleware = (req: any, res: any, next: any) => {

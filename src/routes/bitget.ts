@@ -7,7 +7,7 @@ import {
     postOrder,
 } from '@/global/apis/bitget.api';
 import { COST } from '@/global/config/bitget.config';
-import { asyncHandler } from '@/global/utils/asyncHandler';
+import { asyncHandler } from '@/global/utils/asyncHandler.utils';
 import { Router } from 'express';
 
 const router = Router();

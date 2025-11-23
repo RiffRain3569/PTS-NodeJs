@@ -1,9 +1,9 @@
-import { envMiddleware } from '@/global/middleware/env';
+import { envMiddleware } from '@/global/middleware/env.middleware';
 envMiddleware();
 
-import { PORT } from '@/global/config/info';
+import { PORT } from '@/global/config/info.config';
 import { cronMiddleware } from '@/global/middleware/cron';
-import { entryPointLoggingMiddleware, uuidMiddleware } from '@/global/middleware/logging';
+import { entryPointLoggingMiddleware, uuidMiddleware } from '@/global/middleware/logging.middleware';
 import bitgetRouter from '@/routes/bitget';
 import bithumbRouter from '@/routes/bithumb';
 import express, { Request, Response } from 'express';

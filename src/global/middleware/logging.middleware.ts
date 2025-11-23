@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { asyncLocalStorage, logger } from './logger';
+import { asyncLocalStorage, logger } from './logger.middleware';
 
 // UUID 설정 미들웨어
 export const uuidMiddleware = (req: any, res: any, next: any) => {

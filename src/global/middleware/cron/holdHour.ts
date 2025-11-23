@@ -1,5 +1,5 @@
-import { HOST, PORT } from '@/global/config/info';
-import { send } from '@/global/config/telegram';
+import { HOST, PORT } from '@/global/config/info.config';
+import { send } from '@/global/config/telegram.config';
 import axios from 'axios';
 import cron from 'node-cron';
 
@@ -80,6 +80,7 @@ export const hold_hour_bitget = ({ hour, second = 0, duringHour = 2, top, positi
             market = targetMarket.market.replace('KRW-', '') + 'USDT'; // KRW-BTC -> BTCUSDT
 
             await axios.post(`${HOST}:${PORT}/bitget/${market}`, { message: position });
+            await send(`bitget ${market} ${position} 포지션 오픈 완료 했습니다.`);
         } catch (error) {
             await send('에러가 발생하였습니다.');
             console.log(error);
@@ -90,6 +91,7 @@ export const hold_hour_bitget = ({ hour, second = 0, duringHour = 2, top, positi
     cron.schedule(`${second} 1 ${(hour + duringHour) % 24} * * *`, async () => {
         try {
             await axios.post(`${HOST}:${PORT}/bitget/${market}`, { message: 'S TP' });
+            await send(`bitget ${market} 포지션 클로즈 완료 했습니다.`);
         } catch (error) {
             await send('에러가 발생하였습니다.');
             console.log(error);

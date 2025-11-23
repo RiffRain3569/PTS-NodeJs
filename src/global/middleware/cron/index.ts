@@ -1,5 +1,5 @@
-import { HOST, PORT } from '@/global/config/info';
-import { send } from '@/global/config/telegram';
+import { HOST, PORT } from '@/global/config/info.config';
+import { send } from '@/global/config/telegram.config';
 import axios from 'axios';
 import cron from 'node-cron';
 import { hold_hour, hold_hour_bitget } from './holdHour';

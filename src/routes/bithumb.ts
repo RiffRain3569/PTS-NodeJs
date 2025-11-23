@@ -6,8 +6,8 @@ import {
     getOrderList,
     getTicker,
     postOrder,
-} from '@/global/apis/bithumb';
-import { unitFloor } from '@/global/utils/bithumb';
+} from '@/global/apis/bithumb.api';
+import { unitFloor } from '@/global/utils/bithumb.utils';
 import { Router } from 'express';
 
 const router = Router();
