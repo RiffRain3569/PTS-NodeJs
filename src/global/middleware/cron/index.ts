@@ -2,7 +2,7 @@ import { HOST, PORT } from '@/global/config/info';
 import { send } from '@/global/config/telegram';
 import axios from 'axios';
 import cron from 'node-cron';
-import { hold_hour } from './holdHour';
+import { hold_hour, hold_hour_bitget } from './holdHour';
 
 /**
  * 1시 - 21시 사이 1시간 마다 변동률 상위 5개 조회
@@ -45,6 +45,8 @@ export const cronMiddleware = () => {
         // hold_hour({ hour: 17, second: 2, top: 4, askPercent: 0.05 });
         // hold_hour({ hour: 19, second: 2, top: 5, askPercent: 0.06 });
         // hold_hour({ hour: 21, second: 4, top: 5, askPercent: 0.02 });
+
+        hold_hour_bitget({ hour: 1, second: 1, top: 1, askPercent: 0.1, position: 'SHORT' });
     } else {
         logCron();
         // hold_hour({ hour: 1, second: 1, top: 3, askPercent: 0.05 });

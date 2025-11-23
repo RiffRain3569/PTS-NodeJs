@@ -9,6 +9,7 @@ type Types = {
     duringHour?: number;
     top: number;
     askPercent: number;
+    position?: 'LONG' | 'SHORT';
 };
 export const hold_hour = ({ hour, second = 0, duringHour = 2, top, askPercent }: Types) => {
     let market: any;
@@ -61,6 +62,34 @@ export const hold_hour = ({ hour, second = 0, duringHour = 2, top, askPercent }:
             } else {
                 console.log('매도할 종목이 없습니다.');
             }
+        } catch (error) {
+            await send('에러가 발생하였습니다.');
+            console.log(error);
+        }
+    });
+};
+
+export const hold_hour_bitget = ({ hour, second = 0, duringHour = 2, top, position = 'SHORT' }: Types) => {
+    let market: any;
+
+    // 한 종목 매수
+    cron.schedule(`${second} 1 ${hour} * * *`, async () => {
+        try {
+            const markets: any[] = (await axios.get(`${HOST}:${PORT}/bithumb/market/top5`)).data;
+            const targetMarket = markets.at(Number(top) - 1) ?? { market: '' };
+            market = targetMarket.market.replace('KRW-', '') + 'USDT'; // KRW-BTC -> BTCUSDT
+
+            await axios.post(`${HOST}:${PORT}/bitget/${market}`, { message: position });
+        } catch (error) {
+            await send('에러가 발생하였습니다.');
+            console.log(error);
+        }
+    });
+
+    // 지정 시간 후 예약된 매도 취소 후 전량 매도
+    cron.schedule(`${second} 1 ${(hour + duringHour) % 24} * * *`, async () => {
+        try {
+            await axios.post(`${HOST}:${PORT}/bitget/${market}`, { message: 'S TP' });
         } catch (error) {
             await send('에러가 발생하였습니다.');
             console.log(error);

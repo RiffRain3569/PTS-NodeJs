@@ -4,6 +4,7 @@ envMiddleware();
 import { PORT } from '@/global/config/info';
 import { cronMiddleware } from '@/global/middleware/cron';
 import { entryPointLoggingMiddleware, uuidMiddleware } from '@/global/middleware/logging';
+import bitgetRouter from '@/routes/bitget';
 import bithumbRouter from '@/routes/bithumb';
 import express, { Request, Response } from 'express';
 import figlet from 'figlet';
@@ -28,8 +29,9 @@ app.get('/', (req: Request, res: Response) => {
     console.log(req.body);
     res.send('ok');
 });
-
-app.use('/bithumb', bithumbRouter); // API 관련 라우트
+// API 관련 라우트
+app.use('/bithumb', bithumbRouter);
+app.use('/bitget', bitgetRouter);
 
 app.listen(port, () => {
     console.log(figlet.textSync('PTS'));
