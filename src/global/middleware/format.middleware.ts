@@ -1,4 +1,4 @@
-import { failRes, successRes } from '@/global/utils/statusRes';
+import { failRes, successRes } from '@/global/utils/statusRes.utils';
 
 // 성공, 실패 포맷 설정 미들웨어
 export const responseFormatMiddleware = (req: Request, res: any, next: any) => {
