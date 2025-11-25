@@ -77,7 +77,7 @@ router.post(
                 side: side,
                 tradeSide: 'open',
                 orderType: 'market',
-                presetStopLossPrice: `${Math.round(availableBalance * 0.01 * (100 - 10 * leverage) * 10000) / 10000}`,
+                presetStopLossPrice: `${Math.round(orderPrice * (1 - 0.1 / leverage) * 10000) / 10000}`,
             });
         }
 
