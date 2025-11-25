@@ -6,7 +6,6 @@ import {
     postLeverage,
     postOrder,
 } from '@/global/apis/bitget.api';
-import { COST } from '@/global/config/bitget.config';
 import { asyncHandler } from '@/global/utils/asyncHandler.utils';
 import { Router } from 'express';
 
@@ -61,6 +60,7 @@ router.post(
                 marginCoin: 'USDT',
             });
 
+            const availableBalance = Math.floor(Number(account?.data?.crossedMaxAvailable));
             const bidPrice = Number(ticker.data[0]?.bidPr);
             const askPrice = Number(ticker.data[0]?.askPr);
             const leverage = Number(account?.data?.crossedMarginLeverage);
@@ -73,11 +73,11 @@ router.post(
                 productType: 'USDT-FUTURES',
                 marginMode: 'crossed',
                 marginCoin: 'USDT',
-                size: `${Math.round(((COST * leverage) / orderPrice) * 10000) / 10000}`,
+                size: `${Math.round(((availableBalance * leverage) / orderPrice) * 10000) / 10000}`,
                 side: side,
                 tradeSide: 'open',
                 orderType: 'market',
-                presetStopLossPrice: `${Math.round(COST * 0.01 * (100 - 10 * leverage) * 10000) / 10000}`,
+                presetStopLossPrice: `${Math.round(availableBalance * 0.01 * (100 - 10 * leverage) * 10000) / 10000}`,
             });
         }
 

@@ -22,7 +22,7 @@ export const hold_hour = ({ hour, second = 0, duringHour = 2, top, askPercent }:
             console.log(`${market.korean_name} 매수 완료 했습니다.`);
             await send(`${market.korean_name} 매수 완료 했습니다.`);
         } catch (error) {
-            await send(`bithumb ${market} 에러가 발생하였습니다.`);
+            await send(`bithumb ${market} 매수 에러가 발생하였습니다.`);
             console.log(error);
         }
     });
@@ -42,7 +42,7 @@ export const hold_hour = ({ hour, second = 0, duringHour = 2, top, askPercent }:
                 await send(`${uuids.join(', ')} 매도 예약 완료 했습니다.`);
             }
         } catch (error) {
-            await send(`bithumb ${market} 에러가 발생하였습니다.`);
+            await send(`bithumb ${market} 지정가 에러가 발생하였습니다.`);
             console.log(error);
         }
     });
@@ -63,7 +63,7 @@ export const hold_hour = ({ hour, second = 0, duringHour = 2, top, askPercent }:
                 console.log('매도할 종목이 없습니다.');
             }
         } catch (error) {
-            await send('에러가 발생하였습니다.');
+            await send(`bithumb ${market} 매도 에러가 발생하였습니다.`);
             console.log(error);
         }
     });
@@ -82,7 +82,7 @@ export const hold_hour_bitget = ({ hour, second = 0, duringHour = 2, top, positi
             await axios.post(`${HOST}:${PORT}/bitget/${market}`, { message: position });
             await send(`bitget ${market} ${position} 포지션 오픈 완료 했습니다.`);
         } catch (error) {
-            await send(`bitget ${market} 에러가 발생하였습니다.`);
+            await send(`bitget ${market} 매수 에러가 발생하였습니다.`);
             console.log(error);
         }
     });
@@ -93,7 +93,7 @@ export const hold_hour_bitget = ({ hour, second = 0, duringHour = 2, top, positi
             await axios.post(`${HOST}:${PORT}/bitget/${market}`, { message: 'S TP' });
             await send(`bitget ${market} 포지션 클로즈 완료 했습니다.`);
         } catch (error) {
-            await send(`bitget ${market} 에러가 발생하였습니다.`);
+            await send(`bitget ${market} 매도 에러가 발생하였습니다.`);
             console.log(error);
         }
     });
