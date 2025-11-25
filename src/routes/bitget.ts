@@ -7,6 +7,7 @@ import {
     postOrder,
 } from '@/global/apis/bitget.api';
 import { asyncHandler } from '@/global/utils/asyncHandler.utils';
+import { unitFloor } from '@/global/utils/bitget.utils';
 import { Router } from 'express';
 
 const router = Router();
@@ -78,7 +79,7 @@ router.post(
                 side: side,
                 tradeSide: 'open',
                 orderType: 'market',
-                presetStopLossPrice: `${Math.round(orderPrice * (1 - lossPercent / leverage) * 10000) / 10000}`,
+                presetStopLossPrice: `${unitFloor(orderPrice * (1 + lossPercent / leverage))}`,
             });
         }
 
