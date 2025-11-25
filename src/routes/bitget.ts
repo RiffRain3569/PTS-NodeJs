@@ -60,7 +60,7 @@ router.post(
                 marginCoin: 'USDT',
             });
 
-            const availableBalance = Math.floor(Number(account?.data?.crossedMaxAvailable));
+            const availableBalance = Math.floor(Number(account?.data?.crossedMaxAvailable)) - 2;
             const bidPrice = Number(ticker.data[0]?.bidPr);
             const askPrice = Number(ticker.data[0]?.askPr);
             const leverage = Number(account?.data?.crossedMarginLeverage);
