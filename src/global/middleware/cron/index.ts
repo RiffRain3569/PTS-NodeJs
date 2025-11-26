@@ -48,9 +48,10 @@ export const cronMiddleware = () => {
 
         hold_hour_bitget({ hour: 1, second: 2, top: 1, askPercent: 0.1, position: 'SHORT' });
 
-        hold_hour_bitget({ hour: 14, second: 2, top: 1, askPercent: 0.1, position: 'SHORT' });
-        hold_hour_bitget({ hour: 16, second: 4, top: 1, askPercent: 0.1, position: 'SHORT' });
-        hold_hour_bitget({ hour: 18, second: 6, top: 1, askPercent: 0.1, position: 'SHORT' });
+        hold_hour_bitget({ hour: 10, second: 2, top: 1, askPercent: 0.1, position: 'SHORT' });
+        hold_hour_bitget({ hour: 12, second: 4, top: 1, askPercent: 0.1, position: 'SHORT' });
+        hold_hour_bitget({ hour: 15, second: 2, top: 1, askPercent: 0.1, position: 'SHORT' });
+        hold_hour_bitget({ hour: 18, second: 4, top: 1, askPercent: 0.1, position: 'SHORT' });
         hold_hour_bitget({ hour: 21, second: 2, top: 1, askPercent: 0.1, position: 'SHORT' });
     } else {
         logCron();
