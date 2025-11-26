@@ -79,7 +79,7 @@ router.post(
                 side: side,
                 tradeSide: 'open',
                 orderType: 'market',
-                presetStopLossPrice: `${unitFloor(orderPrice * (1 + lossPercent / leverage))}`,
+                presetStopLossPrice: `${unitFloor(orderPrice * (1 + lossPercent * leverage))}`,
             });
         }
 
