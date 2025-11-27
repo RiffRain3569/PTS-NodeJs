@@ -1,6 +1,10 @@
 export const unitFloor = (price: number): number => {
-    return price < 1
+    return price < 0.001
+        ? Math.floor(price * 1000000) / 1000000 // 0.000001 단위
+        : price < 0.01
         ? Math.floor(price * 100000) / 100000 // 0.00001 단위
+        : price < 1
+        ? Math.floor(price * 10000) / 10000 // 0.0001 단위
         : price < 10
         ? Math.floor(price * 1000) / 1000 // 0.001 단위
         : price < 100
@@ -18,4 +22,10 @@ export const unitFloor = (price: number): number => {
         : price < 1000000
         ? Math.floor(price) - (Math.floor(price) % 500) // 100 단위
         : Math.floor(price) - (Math.floor(price) % 1000); // 1000 단위
+};
+
+export const getDecimalPlaces = (value: number): number => {
+    const str = value.toString();
+    const decimal = str.split('.')[1];
+    return decimal ? decimal.length : 0;
 };
