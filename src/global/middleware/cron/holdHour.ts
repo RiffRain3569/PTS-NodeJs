@@ -73,7 +73,7 @@ export const hold_hour_bitget = ({ hour, second = 0, duringHour = 2, top, positi
     let market: any;
 
     // 한 종목 매수
-    cron.schedule(`${second} * * * * *`, async () => {
+    cron.schedule(`${second} 1 ${hour} * * *`, async () => {
         try {
             const markets: any[] = (await axios.get(`${HOST}:${PORT}/bithumb/market/top5`)).data;
 
@@ -94,7 +94,7 @@ export const hold_hour_bitget = ({ hour, second = 0, duringHour = 2, top, positi
     });
 
     // 지정 시간 후 예약된 매도 취소 후 전량 매도
-    cron.schedule(`${second} * * * * *`, async () => {
+    cron.schedule(`${second} 1 ${(hour + duringHour) % 24} * * *`, async () => {
         try {
             await axios.post(`${HOST}:${PORT}/bitget/${market}`, { message: 'S TP' });
             await send(`bitget ${market} 포지션 클로즈 완료 했습니다.`);
