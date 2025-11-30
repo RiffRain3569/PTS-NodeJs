@@ -7,7 +7,7 @@ type Types = {
     hour: number;
     second?: number;
     duringHour?: number;
-    top: number;
+    top?: number;
     askPercent: number;
     position?: 'LONG' | 'SHORT';
 };
@@ -69,7 +69,7 @@ export const hold_hour = ({ hour, second = 0, duringHour = 2, top, askPercent }:
     });
 };
 
-export const hold_hour_bitget = ({ hour, second = 0, duringHour = 2, top, position = 'SHORT' }: Types) => {
+export const hold_hour_bitget = ({ hour, second = 0, duringHour = 2, position = 'SHORT' }: Types) => {
     let market: any;
 
     // 한 종목 매수
