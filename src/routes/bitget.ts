@@ -65,7 +65,7 @@ router.post(
             const bidPrice = Number(ticker.data[0]?.bidPr);
             const askPrice = Number(ticker.data[0]?.askPr);
             const leverage = Number(account?.data?.crossedMarginLeverage);
-            const lossPercent = 0.1;
+            const lossPercent = 0.15;
 
             // 동일 포지션이면 추가 주문
             const side: SideType = message === 'SHORT' ? 'sell' : 'buy';
@@ -79,7 +79,7 @@ router.post(
                 side: side,
                 tradeSide: 'open',
                 orderType: 'market',
-                presetStopLossPrice: `${unitFloor(orderPrice * (1 + lossPercent * leverage))}`,
+                presetStopLossPrice: `${unitFloor(orderPrice * (1 + lossPercent))}`,
             });
         }
 
