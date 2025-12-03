@@ -66,6 +66,7 @@ export const cronMiddleware = () => {
         hold_hour_bitget({ hour: 10, second: 6, duringHour: 1, askPercent: 0.1, position: 'SHORT' });
         hold_hour_bitget({ hour: 11, second: 6, duringHour: 1, askPercent: 0.1, position: 'SHORT' });
         hold_hour_bitget({ hour: 12, second: 6, duringHour: 1, askPercent: 0.1, position: 'SHORT' });
+        hold_hour_bitget({ hour: 13, second: 6, duringHour: 1, askPercent: 0.1, position: 'SHORT' });
         hold_hour_bitget({ hour: 14, second: 6, duringHour: 1, askPercent: 0.1, position: 'SHORT' });
         hold_hour_bitget({ hour: 15, second: 6, duringHour: 1, askPercent: 0.1, position: 'SHORT' });
         hold_hour_bitget({ hour: 16, second: 6, duringHour: 1, askPercent: 0.1, position: 'SHORT' });
