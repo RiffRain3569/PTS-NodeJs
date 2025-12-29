@@ -62,7 +62,7 @@ router.post(
             });
 
             // const availableBalance = Math.floor(Number(account?.data?.crossedMaxAvailable)) - 2;
-            const availableBalance = 15; // 테스트용 고정값
+            const availableBalance = 10; // 테스트용 고정값
             const bidPrice = Number(ticker.data[0]?.bidPr);
             const askPrice = Number(ticker.data[0]?.askPr);
             const leverage = Number(account?.data?.crossedMarginLeverage);
