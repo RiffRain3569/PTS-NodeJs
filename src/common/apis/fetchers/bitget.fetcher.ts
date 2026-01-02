@@ -1,4 +1,4 @@
-import { API_KEY, PASSPHRASE, SECRET_KEY } from '@/global/config/bitget.config';
+import { API_KEY, PASSPHRASE, SECRET_KEY } from '@/common/config/bitget.config';
 import axios from 'axios';
 import crypto from 'crypto';
 import { parse, stringify } from 'qs';

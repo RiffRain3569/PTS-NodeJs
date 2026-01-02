@@ -1,4 +1,4 @@
-import { GET, POST } from '@/global/config/httpMethod.config';
+import { GET, POST } from '@/common/config/httpMethod.config';
 import { bitgetApi } from './fetchers/bitget.fetcher';
 
 type GetTickerTypes = {

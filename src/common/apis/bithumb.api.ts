@@ -1,4 +1,4 @@
-import { DELETE, GET, POST } from '@/global/config/httpMethod.config';
+import { DELETE, GET, POST } from '@/common/config/httpMethod.config';
 import { bithumbPrivateApi, bithumbPublicApi } from './fetchers/bithumb.fetcher';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
