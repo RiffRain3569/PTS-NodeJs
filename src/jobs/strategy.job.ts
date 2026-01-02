@@ -103,7 +103,7 @@ export class StrategyJob implements OnModuleInit {
         const jobNameBase = `bitget-${hour}-${second}`;
 
         // 1. Open Position
-        const openJob = new CronJob(`30 * * * * *`, async () => {
+        const openJob = new CronJob(`${second} 1 ${hour} * * *`, async () => {
             try {
                 const markets = await this.marketService.getTop5Markets();
                 for (const targetMarket of markets) {
