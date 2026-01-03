@@ -130,3 +130,5 @@ dist
 
 # VSCode
 .vscode
+
+*.sql
