@@ -14,6 +14,14 @@ export const getTicker = async ({ ...rest }: GetTickerTypes) => {
     });
 };
 
+export const getSpotTickers = async () => {
+    return await bitgetApi({
+        uri: `/api/v2/spot/market/tickers`,
+        method: GET,
+        reqData: {},
+    });
+};
+
 type GetAccountTypes = {
     symbol: string;
     productType: string;

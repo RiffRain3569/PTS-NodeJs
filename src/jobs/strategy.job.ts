@@ -41,10 +41,14 @@ export class StrategyJob implements OnModuleInit {
             this.holdHourBitget({ hour: 9, second: 6, duringHour: 1, askPercent: 0.1, position: 'SHORT' });
             this.holdHourBitget({ hour: 10, second: 6, duringHour: 1, askPercent: 0.1, position: 'SHORT' });
         } else {
-            this.holdHourBitget({ hour: 1, second: 6, duringHour: 1, askPercent: 0.1, position: 'SHORT' });
+           this.test();
         }
     }
 
+    async test() {
+        console.log(await this.marketService.getBitgetTop5Markets());
+    }
+    
     holdHour({ hour, second = 0, duringHour = 2, top = 1, askPercent }: HoldHourOptions) {
         let market: any;
         const jobNameBase = `holdHour-${hour}-${second}`;

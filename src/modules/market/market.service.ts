@@ -1,3 +1,4 @@
+import { getSpotTickers } from '@/common/apis/bitget.api';
 import { getMarket, getTicker } from '@/common/apis/bithumb.api';
 import { Injectable } from '@nestjs/common';
 
@@ -31,6 +32,28 @@ export class MarketService {
                 change_rate: `${Math.floor(change_rate * 10000) / 100}%`,
             }))
             .splice(0, 5);
+    }
+
+    async getBitgetTop5Markets() {
+        const response = await getSpotTickers();
+        if (response.code !== '00000') {
+            throw new Error(response.msg || 'Bitget API Error');
+        }
+
+        const markets = response.data;
+        const usdtMarkets = markets.filter((m: any) => m.symbol.endsWith('USDT'));
+
+        const sortedList = usdtMarkets.sort((a: any, b: any) => {
+            return parseFloat(b.changeUtc24h) - parseFloat(a.changeUtc24h);
+        });
+
+        return sortedList.slice(0, 5).map((m: any) => {
+             return {
+                market: m.symbol,
+                trade_price: m.lastPr,
+                change_rate: `${(parseFloat(m.changeUtc24h) * 100).toFixed(2)}%`,
+            };
+        });
     }
 }
 
