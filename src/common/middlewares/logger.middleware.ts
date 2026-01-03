@@ -21,11 +21,16 @@ export const logger = winston.createLogger({
     format: winston.format.combine(
         uuidFormat(), // UUID 포맷 추가
         winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), // 타임스탬프 추가
-        winston.format.printf((info) => `${info.timestamp} [${info.uuid}] ${info.level.toUpperCase()}: ${info.message}`) // 로그 포맷 정의
+        winston.format.printf((info) => {
+            const msg = typeof info.message === 'object' ? JSON.stringify(info.message) : info.message;
+            return `${info.timestamp} [${info.uuid}] ${info.level.toUpperCase()}: ${msg}`;
+        }) // 로그 포맷 정의
     ),
     transports: [
         new winston.transports.Console(), // 콘솔로 로그 출력
-        // 필요에 따라 파일로 로그를 남길 수 있습니다:
-        // new winston.transports.File({ filename: 'logfile.log' })
+        // 에러 로그 파일 설정
+        new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+        // 모든 로그 파일 설정 (선택 사항)
+        // new winston.transports.File({ filename: 'logs/combined.log' }),
     ],
 });
