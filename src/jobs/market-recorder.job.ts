@@ -1,22 +1,14 @@
 import { MarketRepository } from '@/modules/market/infrastructure/market.repository';
 import { MarketService } from '@/modules/market/market.service';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 
 @Injectable()
-export class MarketRecorderJob implements OnModuleInit {
+@Injectable()
+export class MarketRecorderJob {
     private readonly logger = new Logger(MarketRecorderJob.name);
 
     constructor(private readonly marketService: MarketService, private readonly marketRepository: MarketRepository) {}
-
-    async onModuleInit() {
-        this.logger.debug('Running MarketRecorderJob on init for verification...');
-        // Execute immediately on startup
-        // Using setTimeout to allow other modules to initialize if needed (though onModuleInit is usually fine)
-        setTimeout(() => {
-            this.handleCron();
-        }, 3000);
-    }
 
     @Cron('0 1 * * * *')
     async handleCron() {
