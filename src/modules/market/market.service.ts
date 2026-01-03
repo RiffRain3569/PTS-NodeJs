@@ -275,4 +275,55 @@ export class MarketService {
             run_id: runId,
         });
     }
+
+    async recordOpenTrade(
+        exchange: 'bitget' | 'bithumb',
+        symbol: string,
+        entryTime: Date,
+        holdingMinutes: number,
+        entryPrice: string,
+        side: 'LONG' | 'SHORT' = 'LONG',
+        runId?: number
+    ): Promise<void> {
+        // Convert to KST for consistency with storage
+        const kstOffset = 9 * 60 * 60 * 1000;
+        const entryTimeKst = new Date(entryTime.getTime() + kstOffset);
+        // Note: Exit time logic is usually E + Holding.
+        // We set exit_time in DB so we can query "when should I close this?"
+        // But repository.findPendingTrades compares `DATE_ADD(entry_time, holding) <= now`.
+        // If we store KST entry_time, then we must query using KST now?
+        // Wait, if `entry_time` is stored as 01:00 KST (which is effectively just a string/datetime in DB).
+        // And we run job at 03:00 KST.
+        // `DATE_ADD('01:00', 120min)` = '03:00'.
+        // So we should pass KST time to `findPendingTrades` or rely on DB server time?
+        // Since we are moving away from DB time dependency, let's keep it clean.
+        // If we store KST, we should query with KST-adjusted 'now'.
+        // Or simply: store everything in UTC in DB and convert only for display?
+        // But user explicitly added KST conversion code in Service.
+        // I will follow the KST storage pattern.
+
+        const exitTimeKst = new Date(entryTimeKst.getTime() + holdingMinutes * 60 * 1000);
+
+        await this.marketRepository.saveTradeResult({
+            exchange,
+            symbol,
+            market_type: exchange === 'bitget' ? 'USDT_PERP' : 'SPOT_KRW',
+            side,
+            entry_time: entryTimeKst,
+            holding_minutes: holdingMinutes,
+            exit_time: exitTimeKst, // Pre-calculate expected exit time
+            entry_price: entryPrice,
+            exit_price: null,
+            max_roi_pct: null,
+            min_roi_pct: null,
+            exit_roi_pct: null,
+            max_price_during: null,
+            min_price_during: null,
+            price_basis: 'last',
+            timezone: 'KST', // Explicitly marking KST
+            status: 'WAITING',
+            note: 'Open Trade',
+            run_id: runId,
+        });
+    }
 }

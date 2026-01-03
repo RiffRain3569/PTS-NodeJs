@@ -114,4 +114,13 @@ export class MarketRepository {
 
         return await this.db.query(sql, params);
     }
+
+    async findPendingTrades(now: Date): Promise<TradeResult[]> {
+        const sql = `
+            SELECT * FROM trade_result
+            WHERE status = 'WAITING'
+              AND DATE_ADD(entry_time, INTERVAL holding_minutes MINUTE) <= ?
+        `;
+        return await this.db.query(sql, [now]);
+    }
 }

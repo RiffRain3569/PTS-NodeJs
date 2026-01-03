@@ -16,7 +16,7 @@ export interface TradeResult {
     min_price_during: string | null;
     price_basis: string;
     timezone: string;
-    status: 'OK' | 'SKIPPED' | 'MISSING_DATA' | 'ERROR';
+    status: 'OK' | 'SKIPPED' | 'MISSING_DATA' | 'ERROR' | 'WAITING';
     note?: string;
     run_id?: number | null;
     created_at?: Date;
