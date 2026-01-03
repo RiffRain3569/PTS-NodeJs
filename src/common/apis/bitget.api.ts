@@ -22,6 +22,28 @@ export const getSpotTickers = async () => {
     });
 };
 
+export const getCandle = async ({
+    symbol,
+    granularity,
+    startTime,
+    endTime,
+    productType = 'usdt-futures',
+}: {
+    symbol: string;
+    granularity: string;
+    startTime: string;
+    endTime: string;
+    productType?: string;
+}) => {
+    // Bitget V2 Mix Candle
+    // granularity: 1m, 5m, 1h, 1d, etc.
+    return await bitgetApi({
+        uri: `/api/v2/mix/market/candles`,
+        method: GET,
+        reqData: { symbol, granularity, startTime, endTime, productType },
+    });
+};
+
 type GetAccountTypes = {
     symbol: string;
     productType: string;

@@ -103,7 +103,7 @@ export class OrderService {
             const price = `${bithumbUnitFloor(avg_buy_price * (1 + targetPercent))}`;
 
             if (askOkBalance === 0) {
-                 throw { error: 'NOT_BALANCE', message: '보유하지 않았습니다.' };
+                throw { error: 'NOT_BALANCE', message: '보유하지 않았습니다.' };
             }
 
             const orderData = await postBithumbOrder({
@@ -160,7 +160,7 @@ export class OrderService {
     // --- Bitget Logic ---
 
     async handleBitgetSignal(blockchainSymbol: string, message: MsgType) {
-         // 현재 포지션 정보 조회
+        // 현재 포지션 정보 조회
         const allPosition = await getAllPosition({
             productType: 'USDT-FUTURES',
             marginCoin: 'USDT',
@@ -202,7 +202,7 @@ export class OrderService {
             });
 
             // const availableBalance = Math.floor(Number(account?.data?.crossedMaxAvailable)) - 2;
-            const availableBalance = Math.max(Number(account?.data?.crossedMaxAvailable), 6); // 테스트용 최소 5
+            const availableBalance = Math.max(Number(account?.data?.crossedMaxAvailable - 5), 6); // 테스트용 최소 5
             const bidPrice = Number(ticker.data[0]?.bidPr);
             const askPrice = Number(ticker.data[0]?.askPr);
             const leverage = Number(account?.data?.crossedMarginLeverage);
@@ -211,7 +211,7 @@ export class OrderService {
             // 동일 포지션이면 추가 주문
             const side: SideType = message === 'SHORT' ? 'sell' : 'buy';
             const orderPrice = side === 'sell' ? askPrice : bidPrice;
-            
+
             await postBitgetOrder({
                 symbol: blockchainSymbol,
                 productType: 'USDT-FUTURES',

@@ -1,4 +1,4 @@
-import { Controller, Get, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { MarketService } from './market.service';
 
@@ -25,6 +25,24 @@ export class MarketController {
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
+
+    @Post('job/run')
+    async runJob(@Body() body: any, @Res() res: Response) {
+        try {
+            const { exchange, symbol, base_time, holding_minutes, side } = body;
+            const baseTime = new Date(base_time);
+
+            await this.marketService.calculateTradeResult(exchange, symbol, baseTime, {
+                holdingMinutes: holding_minutes ? parseInt(holding_minutes) : undefined,
+                side: side,
+            });
+
+            res.json({ status: 'OK', message: 'Job executed successfully' });
+        } catch (error: any) {
+            console.error(error);
+            res.status(500).json({ error: error.message });
         }
     }
 }
