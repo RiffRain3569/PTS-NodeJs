@@ -202,7 +202,7 @@ export class OrderService {
             });
 
             // const availableBalance = Math.floor(Number(account?.data?.crossedMaxAvailable)) - 2;
-            const availableBalance = Math.min(Number(account?.data?.crossedMaxAvailable), 5); // 테스트용 최소 5
+            const availableBalance = Math.max(Number(account?.data?.crossedMaxAvailable), 5); // 테스트용 최소 5
             const bidPrice = Number(ticker.data[0]?.bidPr);
             const askPrice = Number(ticker.data[0]?.askPr);
             const leverage = Number(account?.data?.crossedMarginLeverage);
