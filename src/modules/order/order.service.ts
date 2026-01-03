@@ -202,22 +202,36 @@ export class OrderService {
             });
 
             // const availableBalance = Math.floor(Number(account?.data?.crossedMaxAvailable)) - 2;
-            const availableBalance = Math.max(Number(account?.data?.crossedMaxAvailable - 5), 6); // 테스트용 최소 5
+            const crossedMaxAvailable = Number(account?.data?.crossedMaxAvailable || 0);
+            const leverage = Number(account?.data?.crossedMarginLeverage || 1);
             const bidPrice = Number(ticker.data[0]?.bidPr);
             const askPrice = Number(ticker.data[0]?.askPr);
-            const leverage = Number(account?.data?.crossedMarginLeverage);
             const lossPercent = 0.1;
 
             // 동일 포지션이면 추가 주문
             const side: SideType = message === 'SHORT' ? 'sell' : 'buy';
             const orderPrice = side === 'sell' ? askPrice : bidPrice;
 
+            // 최소 주문 금액 5USDT 보장 로직
+            let inputMargin = crossedMaxAvailable - 2; // 여유버퍼 2USDT
+            const minOrderValue = 5.5; // 최소 주문 가치 (여유있게 5.5)
+
+            // 주문 가치가 최소값보다 작으면 마진을 조정
+            if (inputMargin * leverage < minOrderValue) {
+                const requiredMargin = minOrderValue / leverage;
+                // 잔고가 충분하면 최소 마진으로 설정, 부족하면 전액 사용 (API 에러 발생 가능성 있음)
+                inputMargin = crossedMaxAvailable >= requiredMargin ? requiredMargin : crossedMaxAvailable;
+            }
+
+            const size = (inputMargin * leverage) / orderPrice;
+            const formattedSize = Math.floor(size * 10000) / 10000; // 소수점 4자리 버림
+
             await postBitgetOrder({
                 symbol: blockchainSymbol,
                 productType: 'USDT-FUTURES',
                 marginMode: 'crossed',
                 marginCoin: 'USDT',
-                size: `${Math.round(((availableBalance * leverage) / orderPrice) * 10000) / 10000}`,
+                size: `${formattedSize}`,
                 side: side,
                 tradeSide: 'open',
                 orderType: 'market',
