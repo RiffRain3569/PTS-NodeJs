@@ -121,14 +121,19 @@ export class MarketService {
         }
 
         if (!candles || candles.length === 0) {
+            // Convert to KST for storage
+            const kstOffset = 9 * 60 * 60 * 1000;
+            const entryTimeKst = new Date(entryTimeMp + kstOffset);
+            const exitTimeKst = new Date(exitTimeMp + kstOffset);
+
             await this.marketRepository.saveTradeResult({
                 exchange,
                 symbol,
                 market_type: marketType,
                 side,
-                entry_time: baseTime,
+                entry_time: entryTimeKst,
                 holding_minutes: holdingMinutes,
-                exit_time: exitTime,
+                exit_time: exitTimeKst,
                 entry_price: '0',
                 exit_price: '0',
                 max_roi_pct: null,
@@ -137,7 +142,7 @@ export class MarketService {
                 max_price_during: null,
                 min_price_during: null,
                 price_basis: priceBasis,
-                timezone: 'UTC',
+                timezone: 'KST',
                 status: 'MISSING_DATA',
                 note: 'No candles found',
                 run_id: runId,
@@ -187,14 +192,19 @@ export class MarketService {
                     candles[0]?.[0] || candles[0]?.candle_date_time_utc
                 }`
             );
+            // Convert to KST for storage
+            const kstOffset = 9 * 60 * 60 * 1000;
+            const entryTimeKst = new Date(entryTimeMp + kstOffset);
+            const exitTimeKst = new Date(exitTimeMp + kstOffset);
+
             await this.marketRepository.saveTradeResult({
                 exchange,
                 symbol,
                 market_type: marketType,
                 side,
-                entry_time: baseTime,
+                entry_time: entryTimeKst,
                 holding_minutes: holdingMinutes,
-                exit_time: exitTime,
+                exit_time: exitTimeKst,
                 entry_price: '0',
                 exit_price: '0',
                 max_roi_pct: null,
@@ -203,7 +213,7 @@ export class MarketService {
                 max_price_during: null,
                 min_price_during: null,
                 price_basis: priceBasis,
-                timezone: 'UTC',
+                timezone: 'KST',
                 status: 'MISSING_DATA',
                 note: 'Filtered out (Time mismatch)',
                 run_id: runId,
@@ -239,14 +249,19 @@ export class MarketService {
             minRoi = ((entryPrice - maxPrice) / entryPrice) * 100;
         }
 
+        // Convert to KST for storage
+        const kstOffset = 9 * 60 * 60 * 1000;
+        const entryTimeKst = new Date(entryTimeMp + kstOffset);
+        const exitTimeKst = new Date(exitTimeMp + kstOffset);
+
         await this.marketRepository.saveTradeResult({
             exchange,
             symbol,
             market_type: marketType,
             side,
-            entry_time: baseTime,
+            entry_time: entryTimeKst,
             holding_minutes: holdingMinutes,
-            exit_time: exitTime,
+            exit_time: exitTimeKst,
             entry_price: entryPrice.toFixed(10),
             exit_price: exitPrice.toFixed(10),
             max_roi_pct: maxRoi.toFixed(5),
@@ -255,7 +270,7 @@ export class MarketService {
             max_price_during: maxPrice.toFixed(10),
             min_price_during: minPrice.toFixed(10),
             price_basis: priceBasis,
-            timezone: 'UTC',
+            timezone: 'KST',
             status: 'OK',
             run_id: runId,
         });
