@@ -90,17 +90,28 @@ export class MarketRepository {
         return rows.length > 0 ? rows[0] : null;
     }
 
-    async findTradeResultsInRange(exchange: string, startDate: Date, endDate: Date): Promise<TradeResult[]> {
-        const sql = `
+    async findTradeResultsInRange(
+        exchange: string,
+        startDate: Date,
+        endDate: Date,
+        hour?: number
+    ): Promise<TradeResult[]> {
+        let sql = `
             SELECT * FROM trade_result
             WHERE exchange = ? 
               AND status = 'OK'
               AND entry_time >= ? 
               AND entry_time <= ?
-            ORDER BY entry_time ASC
         `;
-        // Ensure dates are formatted correctly for MySQL if needed, but db.query usually handles Date objects.
-        // If strict mode or driver issues occur, might need to format to string. Assuming standard behavior here.
-        return await this.db.query(sql, [exchange, startDate, endDate]);
+        const params: any[] = [exchange, startDate, endDate];
+
+        if (hour !== undefined) {
+            sql += ` AND HOUR(entry_time) = ?`;
+            params.push(hour);
+        }
+
+        sql += ` ORDER BY entry_time ASC`;
+
+        return await this.db.query(sql, params);
     }
 }

@@ -10,6 +10,7 @@ export interface MarketExportParams {
     topN: number;
     dedupSymbol: boolean;
     sortBy: 'exit_roi_pct' | 'max_roi_pct' | 'min_roi_pct';
+    hour?: number;
 }
 
 @Injectable()
@@ -17,11 +18,10 @@ export class MarketExportService {
     constructor(private readonly marketRepository: MarketRepository) {}
 
     async exportTopN(params: MarketExportParams): Promise<string> {
-        const { startDate, endDate, exchange, timezone, topN, dedupSymbol, sortBy } = params;
+        const { startDate, endDate, exchange, timezone, topN, dedupSymbol, sortBy, hour } = params;
 
         // 1. Fetch Data
-        const results = await this.marketRepository.findTradeResultsInRange(exchange, startDate, endDate);
-
+        const results = await this.marketRepository.findTradeResultsInRange(exchange, startDate, endDate, hour);
         if (!results || results.length === 0) {
             return '';
         }
@@ -43,10 +43,36 @@ export class MarketExportService {
 
         let tsvOutput = '';
 
+        // 4. Format Output
+        // Generate Header
+        const headerParts = ['Time'];
+        for (let i = 1; i <= topN; i++) {
+            headerParts.push(`${i}_코인명/현재가`, `${i}_최대상승`, `${i}_최대하락`, `${i}_매도당시`);
+        }
+        tsvOutput += headerParts.join('\t') + '\n';
+
+        // Generate Data Rows
         for (const key of sortedKeys) {
             let items = buckets.get(key) || [];
+            // Already deduplicated and sorted above
 
-            // Dedup by symbol (keep best performing one based on sortBy field)
+            // Take Top N
+            // Re-sort and slice logic was effectively here,
+            // but we need to ensure 'items' used here logic is same as before.
+            // In previous step (step 3), we already did:
+            // Dedup -> items = Array.from(...)
+            // Sort -> items.sort(...)
+            // Slice -> topItems = items.slice(0, topN)
+
+            // Let's reuse that logic safely by iterating buckets again or moving it here
+            // Wait, the previous code block iterated keys and built string immediately.
+            // I need to replicate the 'Processing' logic inside this loop or refactor slightly.
+            // Looking at the code context, I am REPLACING the loop.
+            // So I need to include the processing logic (Dedup/Sort) inside this loop
+            // OR assume it was done. But step 3 was INSIDE the loop in previous file content.
+            // So I must include Dedup/Sort logic here.
+
+            // --- Logic from Step 3 (Dedup & Sort) ---
             if (dedupSymbol) {
                 const symbolMap = new Map<string, TradeResult>();
                 for (const item of items) {
@@ -64,32 +90,35 @@ export class MarketExportService {
                 items = Array.from(symbolMap.values());
             }
 
-            // Sort
             items.sort((a, b) => {
                 const valA = parseFloat(a[sortBy] || '-9999');
                 const valB = parseFloat(b[sortBy] || '-9999');
                 return valB - valA; // Descending
             });
 
-            // Top N
             const topItems = items.slice(0, topN);
+            // ----------------------------------------
 
-            // 4. Format Output
-            // Header
-            tsvOutput += `[${key}]\n`;
-            tsvOutput += `코인명\t현재가\t최대상승\t최대하락\t매도당시\n`;
+            const rowParts = [key];
 
-            for (const item of topItems) {
-                const symbol = item.symbol;
-                const entryPrice = item.entry_price || '0';
-                const maxRoi = item.max_roi_pct ? parseFloat(item.max_roi_pct).toFixed(5) : '';
-                const minRoi = item.min_roi_pct ? parseFloat(item.min_roi_pct).toFixed(5) : '';
-                const exitRoi = item.exit_roi_pct ? parseFloat(item.exit_roi_pct).toFixed(5) : '';
+            for (let i = 0; i < topN; i++) {
+                const item = topItems[i];
+                if (item) {
+                    const symbol = item.symbol;
+                    const entryPrice = item.entry_price ? parseFloat(item.entry_price) : 0;
+                    const symbolPrice = `"${symbol}\n${entryPrice}"`;
 
-                tsvOutput += `${symbol}\t${entryPrice}\t${maxRoi}\t${minRoi}\t${exitRoi}\n`;
+                    const maxRoi = item.max_roi_pct ? `${parseFloat(item.max_roi_pct).toFixed(2)}%` : '';
+                    const minRoi = item.min_roi_pct ? `${parseFloat(item.min_roi_pct).toFixed(2)}%` : '';
+                    const exitRoi = item.exit_roi_pct ? `${parseFloat(item.exit_roi_pct).toFixed(2)}%` : '';
+
+                    rowParts.push(symbolPrice, maxRoi, minRoi, exitRoi);
+                } else {
+                    // Empty columns for missing rank
+                    rowParts.push('', '', '', '');
+                }
             }
-
-            tsvOutput += '\n'; // Empty line between sections
+            tsvOutput += rowParts.join('\t') + '\n';
         }
 
         return tsvOutput;
