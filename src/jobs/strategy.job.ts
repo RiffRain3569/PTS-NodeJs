@@ -91,26 +91,45 @@ export class StrategyJob implements OnModuleInit {
         forceSellJob.start();
     }
 
+    private activeBitgetTrade: { market: string; position: 'LONG' | 'SHORT' } | null = null;
+
     // 매 시 1분 6초에 실행
     @Cron('6 1 * * * *')
     async handleBitgetStrategy() {
         if (process.env.NODE_ENV !== 'production') return;
-        // 설정값 (추후 DB화 가능)
-        const position = 'SHORT';
-        const duringHour = 1;
 
+        // 설정값
+        const position = 'SHORT';
         const jobId = `bitget-${Date.now()}`;
-        let market: string = '';
 
         try {
-            // 1. Open Logic
+            // 1. Close Previous Position (if exists)
+            if (this.activeBitgetTrade) {
+                const { market: prevMarket, position: prevPosition } = this.activeBitgetTrade;
+                try {
+                    const closeMsg = prevPosition === 'SHORT' ? 'S TP' : 'L TP';
+                    await this.orderService.handleBitgetSignal(prevMarket, closeMsg);
+                    this.logger.log(`[${jobId}] bitget ${prevMarket} 포지션 클로즈 (Sequential)`);
+                    await this.notificationService.send(`bitget ${prevMarket} 포지션 클로즈`);
+                } catch (error: any) {
+                    await this.notificationService.send(`bitget ${prevMarket} 청산 에러`);
+                    this.logger.error(error);
+                } finally {
+                    this.activeBitgetTrade = null;
+                }
+            }
+
+            // 2. Open New Position
             const markets = await this.marketService.getBitgetTop5Markets();
+            let openedMarket = '';
+
             for (const targetMarket of markets) {
-                market = targetMarket.market;
+                const market = targetMarket.market;
                 try {
                     await this.orderService.handleBitgetSignal(market, position);
                     this.logger.log(`[${jobId}] bitget ${market} ${position} 포지션 오픈`);
                     await this.notificationService.send(`bitget ${market} ${position} 포지션 오픈`);
+                    openedMarket = market;
                     break;
                 } catch (e: any) {
                     await this.notificationService.send(`bitget ${market} ${position} 진입 에러: ${e.message}`);
@@ -118,30 +137,12 @@ export class StrategyJob implements OnModuleInit {
                 }
             }
 
-            if (!market) return; // 진입 실패시 종료
-
-            // 2. Schedule Close Logic (Dynamic)
-            // duringHour 시간 뒤에 실행 (ms 단위 변환)
-            const closeDelay = duringHour * 60 * 60 * 1000 - 2000; // 2초 먼저 실행 (기존 로직 유지)
-
-            const closeTimeout = setTimeout(async () => {
-                try {
-                    const closeMsg = position === 'SHORT' ? 'S TP' : 'L TP';
-                    await this.orderService.handleBitgetSignal(market, closeMsg);
-                    this.logger.log(`[${jobId}] bitget ${market} 포지션 클로즈`);
-                    await this.notificationService.send(`bitget ${market} 포지션 클로즈`);
-                } catch (error: any) {
-                    await this.notificationService.send(`bitget ${market} 청산 에러`);
-                    this.logger.error(error);
-                } finally {
-                    // 메모리 해제 확인 등 필요한 경우 처리 (Timer는 자동 해제됨)
-                }
-            }, closeDelay);
-
-            // SchedulerRegistry에 등록하여 관리 (선택 사항, 필요시 취소 가능하도록)
-            this.schedulerRegistry.addTimeout(`${jobId}-close`, closeTimeout);
+            if (openedMarket) {
+                this.activeBitgetTrade = { market: openedMarket, position };
+            }
         } catch (e: any) {
             this.logger.error(e);
+            await this.notificationService.send(`Strategy Job Error: ${e.message}`);
         }
     }
 }
