@@ -13,6 +13,7 @@ export class MarketRecorderJob {
     async handleCron() {
         this.logger.debug('Starting Market Recorder Job...');
         const now = new Date();
+        now.setSeconds(0, 0); // Truncate to minute precision for deduplication
         const kstOffset = 9 * 60 * 60 * 1000;
         const nowKst = new Date(now.getTime() + kstOffset);
 
