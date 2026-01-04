@@ -22,7 +22,7 @@ export class StrategyJob implements OnModuleInit {
         private readonly orderService: OrderService,
         private readonly notificationService: NotificationService,
         private readonly marketService: MarketService,
-        private readonly schedulerRegistry: SchedulerRegistry,
+        private readonly schedulerRegistry: SchedulerRegistry
     ) {}
 
     onModuleInit() {
@@ -30,14 +30,14 @@ export class StrategyJob implements OnModuleInit {
             // --- Configuration Area ---
             this.holdHour({ hour: 5, second: 2, top: 1, askPercent: 0.1 });
         } else {
-           this.test();
+            this.test();
         }
     }
 
     async test() {
         console.log(await this.marketService.getBitgetTop5Markets());
     }
-    
+
     holdHour({ hour, second = 0, duringHour = 2, top = 1, askPercent }: HoldHourOptions) {
         let market: any;
         const jobNameBase = `holdHour-${hour}-${second}`;
@@ -77,10 +77,10 @@ export class StrategyJob implements OnModuleInit {
             try {
                 const waitingMarkets = await this.orderService.deleteBithumbOrders();
                 if (waitingMarkets.length > 0) {
-                     const marketNames = waitingMarkets.map(({ market }: any) => market);
-                     await this.orderService.askBithumbMarket(marketNames);
-                     this.logger.log(`${marketNames.join(', ')} 매도 완료`);
-                     await this.notificationService.send(`${marketNames.join(', ')} 매도 완료`);
+                    const marketNames = waitingMarkets.map(({ market }: any) => market);
+                    await this.orderService.askBithumbMarket(marketNames);
+                    this.logger.log(`${marketNames.join(', ')} 매도 완료`);
+                    await this.notificationService.send(`${marketNames.join(', ')} 매도 완료`);
                 }
             } catch (e: any) {
                 this.logger.error(e);
@@ -94,6 +94,7 @@ export class StrategyJob implements OnModuleInit {
     // 매 시 1분 6초에 실행
     @Cron('6 1 * * * *')
     async handleBitgetStrategy() {
+        if (process.env.NODE_ENV !== 'production') return;
         // 설정값 (추후 DB화 가능)
         const position = 'SHORT';
         const duringHour = 1;
@@ -110,8 +111,8 @@ export class StrategyJob implements OnModuleInit {
                     await this.orderService.handleBitgetSignal(market, position);
                     this.logger.log(`[${jobId}] bitget ${market} ${position} 포지션 오픈`);
                     await this.notificationService.send(`bitget ${market} ${position} 포지션 오픈`);
-                    break; 
-                } catch (e: any) { 
+                    break;
+                } catch (e: any) {
                     await this.notificationService.send(`bitget ${market} ${position} 진입 에러: ${e.message}`);
                     this.logger.error(e);
                 }
@@ -126,7 +127,7 @@ export class StrategyJob implements OnModuleInit {
             const closeTimeout = setTimeout(async () => {
                 try {
                     const closeMsg = position === 'SHORT' ? 'S TP' : 'L TP';
-                    await this.orderService.handleBitgetSignal(market, closeMsg); 
+                    await this.orderService.handleBitgetSignal(market, closeMsg);
                     this.logger.log(`[${jobId}] bitget ${market} 포지션 클로즈`);
                     await this.notificationService.send(`bitget ${market} 포지션 클로즈`);
                 } catch (error: any) {
@@ -136,10 +137,9 @@ export class StrategyJob implements OnModuleInit {
                     // 메모리 해제 확인 등 필요한 경우 처리 (Timer는 자동 해제됨)
                 }
             }, closeDelay);
-            
+
             // SchedulerRegistry에 등록하여 관리 (선택 사항, 필요시 취소 가능하도록)
             this.schedulerRegistry.addTimeout(`${jobId}-close`, closeTimeout);
-
         } catch (e: any) {
             this.logger.error(e);
         }

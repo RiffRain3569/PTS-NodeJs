@@ -11,6 +11,10 @@ export class MarketRecorderJob {
 
     @Cron('0 1 * * * *')
     async handleCron() {
+        if (process.env.NODE_ENV !== 'production') {
+            this.logger.debug('Skipping Market Recorder Job (Not Production)');
+            return;
+        }
         this.logger.debug('Starting Market Recorder Job...');
         const now = new Date();
         now.setSeconds(0, 0); // Truncate to minute precision for deduplication
