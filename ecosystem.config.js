@@ -3,7 +3,7 @@ module.exports = {
         {
             name: 'my-app',
             script: 'node',
-            args: '-r module-alias/register ./dist/src/app.js',
+            args: '-r module-alias/register ./dist/src/main.js',
             env: {
                 NODE_ENV: 'production',
             },
