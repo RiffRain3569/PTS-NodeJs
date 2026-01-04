@@ -4,7 +4,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 
 @Injectable()
-@Injectable()
 export class MarketRecorderJob {
     private readonly logger = new Logger(MarketRecorderJob.name);
 
@@ -95,7 +94,9 @@ export class MarketRecorderJob {
 
             this.logger.debug('Market Recorder Job Completed.');
         } catch (e: any) {
-            this.logger.error('Error in Market Recorder Job', e);
+            const msg = e instanceof Error ? e.message : JSON.stringify(e);
+            const stack = e instanceof Error ? e.stack : undefined;
+            this.logger.error(`Error in Market Recorder Job: ${msg}`, stack);
         }
     }
 }
