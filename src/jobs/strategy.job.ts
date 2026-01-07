@@ -99,7 +99,7 @@ export class StrategyJob implements OnModuleInit {
         if (process.env.NODE_ENV !== 'production') return;
 
         // 설정값
-        const position = 'SHORT';
+        const position = 'LONG';
         const jobId = `bitget-${Date.now()}`;
 
         try {
