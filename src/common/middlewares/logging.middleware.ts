@@ -18,12 +18,29 @@ export const entryPointLoggingMiddleware = (req: any, res: any, next: any) => {
     logger.info(`>>> CONTROLLER INPUT: ${JSON.stringify(requestSummary)}`);
 
     // response logging
+    // response logging helper
+    const logResponse = (body: any, res: any) => {
+        if (res.locals.loggingDone) return;
+        res.locals.loggingDone = true;
+
+        const contentType = res.get('Content-Type') || res.getHeader('content-type') || '';
+        if (contentType && contentType.includes('application/json')) {
+            logger.info(`>>> CONTROLLER OUTPUT: ${body}`);
+        } else {
+            logger.info(`>>> CONTROLLER OUTPUT: Content-Type: ${contentType}`);
+        }
+    };
+
     const originalSend = res.send;
     res.send = function (body: any) {
-        // 응답 로그 기록
-        logger.info(`>>> CONTROLLER OUTPUT: ${body}`);
-        // 원래의 send 함수 호출
+        logResponse(body, res);
         return originalSend.apply(this, arguments);
+    };
+
+    const originalEnd = res.end;
+    res.end = function (chunk: any, encoding: any) {
+        logResponse(chunk, res); // chunk might be buffer or string
+        return originalEnd.apply(this, arguments);
     };
 
     next();

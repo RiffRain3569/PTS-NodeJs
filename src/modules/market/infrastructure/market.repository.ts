@@ -99,7 +99,6 @@ export class MarketRepository {
         let sql = `
             SELECT * FROM trade_result
             WHERE exchange = ? 
-              AND status = 'OK'
               AND entry_time >= ? 
               AND entry_time <= ?
         `;
