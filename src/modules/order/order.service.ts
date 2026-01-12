@@ -224,7 +224,15 @@ export class OrderService {
             }
 
             const size = (inputMargin * leverage) / orderPrice;
-            const formattedSize = Math.floor(size * 10000) / 10000; // 소수점 4자리 버림
+            const formattedSize = Math.floor(size * 1000000) / 1000000; // 소수점 6자리 버림
+
+            if (formattedSize <= 0) {
+                console.error(`[Bitget Order Error] Calculated size is 0 or less. skipping.`);
+                return { result: 'fail', message: 'Size too small' };
+            }
+
+            // 손절가 계산 (LONG: 진입가보다 낮게, SHORT: 진입가보다 높게)
+            const stopLossPrice = side === 'buy' ? orderPrice * (1 - lossPercent) : orderPrice * (1 + lossPercent);
 
             await postBitgetOrder({
                 symbol: blockchainSymbol,
@@ -235,7 +243,7 @@ export class OrderService {
                 side: side,
                 tradeSide: 'open',
                 orderType: 'market',
-                presetStopLossPrice: `${bitgetUnitFloor(orderPrice * (1 + lossPercent))}`,
+                presetStopLossPrice: `${bitgetUnitFloor(stopLossPrice)}`,
             });
         }
         return { result: 'ok' };
