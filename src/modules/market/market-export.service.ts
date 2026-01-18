@@ -12,6 +12,8 @@ export interface MarketExportParams {
     dedupSymbol: boolean;
     sortBy: 'exit_roi_pct' | 'max_roi_pct' | 'min_roi_pct' | 'id';
     targetHour?: number; // Local hour (0-23)
+    targetHours?: number[]; // Local hours (0-23)
+    position?: 'LONG' | 'SHORT' | 'ALL';
 }
 
 @Injectable()
@@ -19,29 +21,76 @@ export class MarketExportService {
     constructor(private readonly marketRepository: MarketRepository) {}
 
     async exportTopN(params: MarketExportParams): Promise<Buffer> {
-        const { startDate, endDate, exchange, timezone, topN, dedupSymbol, sortBy, targetHour } = params;
-
-        // Calculate UTC Hour if targetHour is provided
-        // DB stores "Absolute/Local" time (naive). Do NOT convert targetHour to UTC.
-        const queryHour = targetHour;
+        const {
+            startDate,
+            endDate,
+            exchange,
+            timezone,
+            topN,
+            dedupSymbol,
+            sortBy,
+            targetHours,
+            position = 'LONG',
+        } = params;
 
         // 1. Fetch Data
-        console.log(`[Export] Querying: ${exchange}, ${startDate} ~ ${endDate}, HourFilter: ${targetHour ?? 'ALL'}`);
-        const results = await this.marketRepository.findTradeResultsInRange(exchange, startDate, endDate, queryHour);
+        // If targetHours provided (or just generally), we fetch ALL for the date range
+        // filtering by hour in memory avoids multiple DB calls.
+        // If targetHour (singular) was passed, we could use it, but new logic prefers targetHours array.
+        const queryHour = params.targetHour; // Legacy support if needed, but we likely ignore it if targetHours set.
+
+        // If targetHours is set, we ignore queryHour in DB query to get all potential rows, then filter.
+        // If targetHours is NOT set, we respect queryHour if present.
+        const effectiveQueryHour = targetHours && targetHours.length > 0 ? undefined : queryHour;
+
+        console.log(
+            `[Export] Querying: ${exchange}, ${startDate} ~ ${endDate}, HourFilter: ${effectiveQueryHour ?? 'ALL'}`
+        );
+        const results = await this.marketRepository.findTradeResultsInRange(
+            exchange,
+            startDate,
+            endDate,
+            effectiveQueryHour
+        );
         console.log(`[Export] Found ${results ? results.length : 0} results`);
 
-        if (!results || results.length === 0) {
-            console.log('[Export] No data found, generating empty Excel');
-            // throw new Error('No data found for the given criteria');
+        const wb = XLSX.utils.book_new();
+
+        // Filter by Position
+        const positionFiltered = (results || []).filter((r) => {
+            if (position === 'ALL') return true;
+            return r.side === position;
+        });
+
+        // Determine sheets to create
+        if (targetHours && targetHours.length > 0) {
+            for (const h of targetHours) {
+                // Filter by hour (local/absolute hour from DB)
+                const hourData = positionFiltered.filter((r) => r.entry_time.getHours() === h);
+                this.createSheet(wb, hourData, `${h}시`, topN, dedupSymbol, sortBy);
+            }
+        } else {
+            // Fallback or Single Sheet
+            const sheetName = queryHour !== undefined ? `${queryHour}시` : 'All';
+            this.createSheet(wb, positionFiltered, sheetName, topN, dedupSymbol, sortBy);
         }
 
-        // 2. Filter only LONG and Group by Timezone adjusted Hourly Bucket
-        const longResults = results.filter((r) => r.side === 'LONG');
+        // 5. Generate Buffer
+        const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+        return Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
+    }
+
+    private createSheet(
+        wb: XLSX.WorkBook,
+        data: TradeResult[],
+        sheetName: string,
+        topN: number,
+        dedupSymbol: boolean,
+        sortBy: 'exit_roi_pct' | 'max_roi_pct' | 'min_roi_pct' | 'id'
+    ) {
         const buckets = new Map<string, TradeResult[]>();
 
-        for (const trade of longResults) {
-            // DB Date Object (e.g. 09:00Z) is actually 09:00 Local.
-            // Just format the UTC components directly to keep "09:00".
+        for (const trade of data) {
             const bucketKey = this.getBucketKeyAsIs(trade.entry_time);
             if (!buckets.has(bucketKey)) {
                 buckets.set(bucketKey, []);
@@ -49,7 +98,6 @@ export class MarketExportService {
             buckets.get(bucketKey)?.push(trade);
         }
 
-        // 3. Prepare Data for SheetJS
         const sortedKeys = Array.from(buckets.keys()).sort();
         const dataRows: any[][] = [];
 
@@ -60,7 +108,6 @@ export class MarketExportService {
         }
         dataRows.push(headerRow);
 
-        // Rows
         for (const key of sortedKeys) {
             let items = buckets.get(key) || [];
 
@@ -85,17 +132,11 @@ export class MarketExportService {
                         }
 
                         if (sortBy === 'id') {
-                            // Keep smaller ID (First)
-                            const keepCurrent = currentVal < existingVal;
-                            if (keepCurrent) {
-                                symbolMap.set(item.symbol, item);
-                            }
+                            // Keep smaller ID
+                            if (currentVal < existingVal) symbolMap.set(item.symbol, item);
                         } else {
                             // Keep Larger ROI
-                            const keepCurrent = currentVal > existingVal;
-                            if (keepCurrent) {
-                                symbolMap.set(item.symbol, item);
-                            }
+                            if (currentVal > existingVal) symbolMap.set(item.symbol, item);
                         }
                     }
                 }
@@ -112,7 +153,6 @@ export class MarketExportService {
                     const key = sortBy as keyof TradeResult;
                     const rawA = a[key] as string | null;
                     const rawB = b[key] as string | null;
-
                     const valA = parseFloat(rawA || '-9999');
                     const valB = parseFloat(rawB || '-9999');
                     return valB - valA;
@@ -125,7 +165,6 @@ export class MarketExportService {
             for (let i = 0; i < topN; i++) {
                 const item = topItems[i];
                 if (item) {
-                    // Format: "Symbol\nEntryPrice" (Trimmed)
                     const entryPriceRaw = item.entry_price || '0';
                     const entryPriceTrimmed = parseFloat(entryPriceRaw).toString();
                     const symbolText = `${item.symbol}\n${entryPriceTrimmed}`;
@@ -134,9 +173,6 @@ export class MarketExportService {
                         if (val === null || val === undefined || val === '') return '';
                         const num = typeof val === 'string' ? parseFloat(val) : val;
                         if (isNaN(num)) return '';
-
-                        // Truncate to 2 decimal places (discard rest)
-                        // Math.trunc works for both positive and negative
                         const truncated = Math.trunc(num * 100) / 100;
                         return `${truncated.toFixed(2)}%`;
                     };
@@ -153,24 +189,14 @@ export class MarketExportService {
             dataRows.push(row);
         }
 
-        // 4. Create Workbook
         const ws = XLSX.utils.aoa_to_sheet(dataRows);
-
-        // Basic Column Widths (optional)
-        const wscols = [{ wch: 20 }]; // Time column
+        const wscols = [{ wch: 20 }];
         for (let i = 0; i < topN * 4; i++) {
             wscols.push({ wch: 15 });
         }
         ws['!cols'] = wscols;
 
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Market Data');
-
-        // 5. Generate Buffer
-        const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-
-        // Ensure strictly Node Buffer
-        return Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
     }
 
     private getUtcHour(localHour: number, timezone: string): number {

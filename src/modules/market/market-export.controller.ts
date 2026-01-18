@@ -115,9 +115,17 @@ export class MarketExportController {
         
         <div class="form-group">
             <label>Exchange</label>
-            <select id="exchange">
+            <select id="exchange" onchange="handleExchangeChange()">
                 <option value="bithumb" selected>Bithumb</option>
                 <option value="bitget">Bitget</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Position Phase</label>
+            <select id="position">
+                <option value="LONG" selected>Long</option>
+                <option value="SHORT">Short</option>
             </select>
         </div>
 
@@ -147,7 +155,7 @@ export class MarketExportController {
         <button onclick="downloadExcel()">엑셀 다운로드 (Download)</button>
         <div class="note">
             TopN=5, Timezone=Asia/Seoul (Fixed)<br>
-            LONG Only, Raw Format
+            Raw Format
         </div>
     </div>
 
@@ -156,6 +164,22 @@ export class MarketExportController {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('startDate').value = today;
         document.getElementById('endDate').value = today;
+
+        // Exchange Change Handler
+        function handleExchangeChange() {
+            const exchange = document.getElementById('exchange').value;
+            const positionSelect = document.getElementById('position');
+            
+            if (exchange === 'bithumb') {
+                positionSelect.value = 'LONG';
+                positionSelect.disabled = true;
+            } else {
+                positionSelect.disabled = false;
+            }
+        }
+        
+        // Init handler
+        handleExchangeChange();
 
         // Generate Checkboxes
         const grid = document.getElementById('hourGrid');
@@ -204,25 +228,17 @@ export class MarketExportController {
                 return;
             }
 
-            // Batch Download
-            let delay = 0;
-            selectedHours.forEach(hour => {
-                const url = \`/market/export/\${exchange}/top?startDate=\${startDate}&endDate=\${endDate}&targetHour=\${hour}&timezone=Asia/Seoul&topN=5\`;
-                
-                setTimeout(() => {
-                    const iframe = document.createElement('iframe');
-                    iframe.style.display = 'none';
-                    iframe.src = url;
-                    document.body.appendChild(iframe);
-                    // Cleanup usage if needed, but for downloads usually fine to leave or remove after delay
-                    setTimeout(() => document.body.removeChild(iframe), 60000); 
-                }, delay);
-                
-                delay += 1000; // 1 second interval to avoid browser blocking
-            });
+            // NEW: Single Download with targetHours parameter
+            const hoursParam = selectedHours.join(','); // "1,2,3,4"
+            const position = document.getElementById('position').value;
+
+            // Construct URL
+            const url = \`/market/export/\${exchange}/top?startDate=\${startDate}&endDate=\${endDate}&targetHours=\${hoursParam}&timezone=Asia/Seoul&topN=5&position=\${position}\`;
             
-            const msg = selectedHours.length + '개 파일 다운로드를 시작합니다 (순차 실행)';
-            // console.log(msg);
+            // Trigger Download
+            window.location.href = url;
+            
+            // console.log('Downloading single file for hours: ' + hoursParam);
         }
     </script>
 </body>
@@ -249,7 +265,9 @@ export class MarketExportController {
                 dedupSymbol = 'true',
                 sortBy = 'id',
                 hour,
-                targetHour, // Supports both old and new param names if needed, or just switch
+                targetHour,
+                targetHours, // "1,2,3" string
+                position = 'LONG',
             } = query;
 
             // 1. Date Range Logic
@@ -309,6 +327,25 @@ export class MarketExportController {
                 }
             }
 
+            // Parse targetHours (Comma separated)
+            let parsedTargetHours: number[] | undefined;
+            if (targetHours) {
+                parsedTargetHours = targetHours.split(',').map((h: string) => parseInt(h.trim(), 10));
+                // Validate
+                if (parsedTargetHours && parsedTargetHours.some((h) => isNaN(h) || h < 0 || h > 23)) {
+                    throw new BadRequestException('Invalid targetHours. Must be comma separated numbers 0-23');
+                }
+            } else if (parsedHour !== undefined) {
+                // If only single hour provided, treat as array of one for service
+                // But service also supports single arg. Let's pass array if possible for consistency
+                // actually service signature has targetHours?: number[]
+                parsedTargetHours = [parsedHour];
+            }
+
+            if (!['LONG', 'SHORT', 'ALL'].includes(position)) {
+                throw new BadRequestException('Invalid position. Must be LONG, SHORT, or ALL');
+            }
+
             // 3. Call Service
             console.log(`Generating Excel for ${exchange}...`);
             const excelBuffer = await this.exportService.exportTopN({
@@ -319,14 +356,18 @@ export class MarketExportController {
                 topN: parsedTopN,
                 dedupSymbol: isDedup,
                 sortBy: sortBy as any,
-                targetHour: parsedHour, // Pass as targetHour
+                targetHour: parsedHour, // Legacy pass-through, though service prioritizes targetHours
+                targetHours: parsedTargetHours,
+                position: position as any,
             });
             console.log(`Excel generated. Buffer size: ${excelBuffer.length} bytes`);
 
             // 4. Response
             const filenameDate = startDate || date || 'export';
-            const filename = `top${parsedTopN}_${exchange}_${filenameDate}${
-                parsedHour !== undefined ? `_h${parsedHour}` : ''
+            const filename = `top${parsedTopN}_${exchange}_${position}_${filenameDate}${
+                parsedHour !== undefined && (!parsedTargetHours || parsedTargetHours.length <= 1)
+                    ? `_h${parsedHour}`
+                    : '_multi'
             }.xlsx`;
 
             res.set({
