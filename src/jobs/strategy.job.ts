@@ -2,7 +2,7 @@ import { MarketService } from '@/modules/market/market.service';
 import { NotificationService } from '@/modules/notification/notification.service';
 import { OrderService } from '@/modules/order/order.service';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Cron, SchedulerRegistry } from '@nestjs/schedule';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 
 interface HoldHourOptions {
@@ -94,7 +94,7 @@ export class StrategyJob implements OnModuleInit {
     private activeBitgetTrade: { market: string; position: 'LONG' | 'SHORT' } | null = null;
 
     // 매 시 1분 6초에 실행
-    @Cron('6 1 * * * *')
+    // @Cron('6 1 * * * *')
     async handleBitgetStrategy() {
         if (process.env.NODE_ENV !== 'production') return;
 
