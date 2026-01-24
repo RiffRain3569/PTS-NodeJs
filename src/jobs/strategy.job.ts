@@ -22,7 +22,7 @@ export class StrategyJob implements OnModuleInit {
         private readonly orderService: OrderService,
         private readonly notificationService: NotificationService,
         private readonly marketService: MarketService,
-        private readonly schedulerRegistry: SchedulerRegistry
+        private readonly schedulerRegistry: SchedulerRegistry,
     ) {}
 
     onModuleInit() {
@@ -42,23 +42,18 @@ export class StrategyJob implements OnModuleInit {
         let market: any;
         const jobNameBase = `holdHour-${hour}-${second}`;
 
-        // 1. Buy Job
-        const buyJob = new CronJob(`${second} 1 ${hour} * * *`, async () => {
+        // 1. Buy & Sell Reserve Job (Combined)
+        const buyAndSellJob = new CronJob(`${second} 1 ${hour} * * *`, async () => {
             try {
+                // 1-1. Buy
                 market = await this.orderService.bidBithumbTop(top);
                 this.logger.log(`${market.korean_name} 매수 완료`);
                 await this.notificationService.send(`${market.korean_name} 매수 완료`);
-            } catch (e: any) {
-                this.logger.error(e);
-                await this.notificationService.send(`매수 실패: ${e.message}`);
-            }
-        });
-        this.schedulerRegistry.addCronJob(`${jobNameBase}-buy`, buyJob);
-        buyJob.start();
 
-        // 2. Sell Reserve Job
-        const sellJob = new CronJob(`${second + 5} 1 ${hour} * * *`, async () => {
-            try {
+                // 1-2. Wait 5 seconds
+                await new Promise((resolve) => setTimeout(resolve, 5000));
+
+                // 1-3. Sell Reserve
                 if (!!market?.market) {
                     const uuids = await this.orderService.askBithumbLimit([market], askPercent);
                     this.logger.log(`${uuids.join(', ')} 매도 예약 완료`);
@@ -66,18 +61,27 @@ export class StrategyJob implements OnModuleInit {
                 }
             } catch (e: any) {
                 this.logger.error(e);
-                await this.notificationService.send(`지정가 에러: ${e.message}`);
+                await this.notificationService.send(`매수/매도 예약 실패: ${e.message}`);
             }
         });
-        this.schedulerRegistry.addCronJob(`${jobNameBase}-sell`, sellJob);
-        sellJob.start();
+        this.schedulerRegistry.addCronJob(`${jobNameBase}-buy-sell`, buyAndSellJob);
+        buyAndSellJob.start();
 
-        // 3. Force Sell Job
+        // 2. Force Sell Job
         const forceSellJob = new CronJob(`${second} 1 ${(hour + duringHour) % 24} * * *`, async () => {
             try {
                 const waitingMarkets = await this.orderService.deleteBithumbOrders();
-                if (waitingMarkets.length > 0) {
-                    const marketNames = waitingMarkets.map(({ market }: any) => market);
+                const marketNames = waitingMarkets.map(({ market }: any) => market);
+
+                // Fallback: If no orders were cancelled but we have a market from buy job
+                if (market?.market && !marketNames.includes(market.market)) {
+                    marketNames.push(market.market);
+                }
+
+                if (marketNames.length > 0) {
+                    // Wait for balance update (latency)
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+
                     await this.orderService.askBithumbMarket(marketNames);
                     this.logger.log(`${marketNames.join(', ')} 매도 완료`);
                     await this.notificationService.send(`${marketNames.join(', ')} 매도 완료`);
