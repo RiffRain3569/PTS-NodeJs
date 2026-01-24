@@ -1,6 +1,7 @@
 import { MarketService } from '@/modules/market/market.service';
 import { NotificationService } from '@/modules/notification/notification.service';
-import { OrderService } from '@/modules/order/order.service';
+import { BitgetOrderService } from '@/modules/order/providers/bitget-order.service';
+import { BithumbOrderService } from '@/modules/order/providers/bithumb-order.service';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
@@ -28,7 +29,8 @@ export class StrategyJob implements OnModuleInit {
     private readonly logger = new Logger(StrategyJob.name);
 
     constructor(
-        private readonly orderService: OrderService,
+        private readonly bithumbOrderService: BithumbOrderService,
+        private readonly bitgetOrderService: BitgetOrderService,
         private readonly notificationService: NotificationService,
         private readonly marketService: MarketService,
         private readonly schedulerRegistry: SchedulerRegistry,
@@ -56,7 +58,7 @@ export class StrategyJob implements OnModuleInit {
         const buyAndSellJob = new CronJob(`${second} 1 ${hour} * * *`, async () => {
             try {
                 // 1-1. Buy
-                market = await this.orderService.bidBithumbTop(top);
+                market = await this.bithumbOrderService.bidBithumbTop(top);
                 this.logger.log(`${market.korean_name} 매수 완료`);
                 await this.notificationService.send(`${market.korean_name} 매수 완료`);
 
@@ -65,7 +67,7 @@ export class StrategyJob implements OnModuleInit {
 
                 // 1-3. Sell Reserve
                 if (!!market?.market) {
-                    const uuids = await this.orderService.askBithumbLimit([market], askPercent);
+                    const uuids = await this.bithumbOrderService.askBithumbLimit([market], askPercent);
                     this.logger.log(`${uuids.join(', ')} 매도 예약 완료`);
                     await this.notificationService.send(`${uuids.join(', ')} 매도 예약 완료`);
                 }
@@ -80,7 +82,7 @@ export class StrategyJob implements OnModuleInit {
         // 2. Force Sell Job
         const forceSellJob = new CronJob(`${second} 1 ${(hour + duringHour) % 24} * * *`, async () => {
             try {
-                const waitingMarkets = await this.orderService.deleteBithumbOrders();
+                const waitingMarkets = await this.bithumbOrderService.deleteBithumbOrders();
                 const marketNames = waitingMarkets.map(({ market }: any) => market);
 
                 // Fallback: If no orders were cancelled but we have a market from buy job
@@ -92,7 +94,7 @@ export class StrategyJob implements OnModuleInit {
                     // Wait for balance update (latency)
                     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-                    await this.orderService.askBithumbMarket(marketNames);
+                    await this.bithumbOrderService.askBithumbMarket(marketNames);
                     this.logger.log(`${marketNames.join(', ')} 매도 완료`);
                     await this.notificationService.send(`${marketNames.join(', ')} 매도 완료`);
                 }
@@ -104,6 +106,7 @@ export class StrategyJob implements OnModuleInit {
         this.schedulerRegistry.addCronJob(`${jobNameBase}-forceSell`, forceSellJob);
         forceSellJob.start();
     }
+
     bitgetHoldHour({ hour, second = 0, duringHour = 1, top = 1, position, slPercent }: BitgetHoldHourOptions) {
         let market: string;
         const jobNameBase = `bitgetHoldHour-${hour}-${second}`;
@@ -111,7 +114,7 @@ export class StrategyJob implements OnModuleInit {
         // 1. Open Job
         const openJob = new CronJob(`${second} 1 ${hour} * * *`, async () => {
             try {
-                const result = await this.orderService.openBitgetMarket(top, position, slPercent);
+                const result = await this.bitgetOrderService.openBitgetMarket(top, position, slPercent);
                 market = result.market;
                 this.logger.log(`[Bitget] ${market} ${position} 진입 완료 (SL: ${slPercent * 100}%)`);
                 await this.notificationService.send(`[Bitget] ${market} ${position} 진입 완료`);
@@ -127,7 +130,7 @@ export class StrategyJob implements OnModuleInit {
         const forceCloseJob = new CronJob(`${second} 1 ${(hour + duringHour) % 24} * * *`, async () => {
             try {
                 if (market) {
-                    await this.orderService.closeBitgetMarket(market);
+                    await this.bitgetOrderService.closeBitgetMarket(market);
                     this.logger.log(`[Bitget] ${market} 포지션 종료 완료`);
                     await this.notificationService.send(`[Bitget] ${market} 포지션 종료 완료`);
                 }
