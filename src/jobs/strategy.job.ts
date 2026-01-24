@@ -14,6 +14,15 @@ interface HoldHourOptions {
     position?: 'LONG' | 'SHORT';
 }
 
+interface BitgetHoldHourOptions {
+    hour: number;
+    second?: number;
+    duringHour?: number;
+    top?: number;
+    position: 'LONG' | 'SHORT';
+    slPercent: number;
+}
+
 @Injectable()
 export class StrategyJob implements OnModuleInit {
     private readonly logger = new Logger(StrategyJob.name);
@@ -29,6 +38,7 @@ export class StrategyJob implements OnModuleInit {
         if (process.env.NODE_ENV === 'production') {
             // --- Configuration Area ---
             this.holdHour({ hour: 5, second: 2, top: 1, askPercent: 0.1 });
+            // this.bitgetHoldHour({ hour: 9, top: 1, position: 'LONG', slPercent: 0.05 });
         } else {
             this.test();
         }
@@ -94,59 +104,39 @@ export class StrategyJob implements OnModuleInit {
         this.schedulerRegistry.addCronJob(`${jobNameBase}-forceSell`, forceSellJob);
         forceSellJob.start();
     }
+    bitgetHoldHour({ hour, second = 0, duringHour = 1, top = 1, position, slPercent }: BitgetHoldHourOptions) {
+        let market: string;
+        const jobNameBase = `bitgetHoldHour-${hour}-${second}`;
 
-    private activeBitgetTrade: { market: string; position: 'LONG' | 'SHORT' } | null = null;
+        // 1. Open Job
+        const openJob = new CronJob(`${second} 1 ${hour} * * *`, async () => {
+            try {
+                const result = await this.orderService.openBitgetMarket(top, position, slPercent);
+                market = result.market;
+                this.logger.log(`[Bitget] ${market} ${position} 진입 완료 (SL: ${slPercent * 100}%)`);
+                await this.notificationService.send(`[Bitget] ${market} ${position} 진입 완료`);
+            } catch (e: any) {
+                this.logger.error(e);
+                await this.notificationService.send(`[Bitget] 진입 실패: ${e.message}`);
+            }
+        });
+        this.schedulerRegistry.addCronJob(`${jobNameBase}-open`, openJob);
+        openJob.start();
 
-    // 매 시 1분 6초에 실행
-    // @Cron('6 1 * * * *')
-    async handleBitgetStrategy() {
-        if (process.env.NODE_ENV !== 'production') return;
-
-        // 설정값
-        const position = 'LONG';
-        const jobId = `bitget-${Date.now()}`;
-
-        try {
-            // 1. Close Previous Position (if exists)
-            if (this.activeBitgetTrade) {
-                const { market: prevMarket, position: prevPosition } = this.activeBitgetTrade;
-                try {
-                    const closeMsg = prevPosition === 'SHORT' ? 'S TP' : 'L TP';
-                    await this.orderService.handleBitgetSignal(prevMarket, closeMsg);
-                    this.logger.log(`[${jobId}] bitget ${prevMarket} 포지션 클로즈 (Sequential)`);
-                    await this.notificationService.send(`bitget ${prevMarket} 포지션 클로즈`);
-                } catch (error: any) {
-                    await this.notificationService.send(`bitget ${prevMarket} 청산 에러`);
-                    this.logger.error(error);
-                } finally {
-                    this.activeBitgetTrade = null;
+        // 2. Force Close Job
+        const forceCloseJob = new CronJob(`${second} 1 ${(hour + duringHour) % 24} * * *`, async () => {
+            try {
+                if (market) {
+                    await this.orderService.closeBitgetMarket(market);
+                    this.logger.log(`[Bitget] ${market} 포지션 종료 완료`);
+                    await this.notificationService.send(`[Bitget] ${market} 포지션 종료 완료`);
                 }
+            } catch (e: any) {
+                this.logger.error(e);
+                await this.notificationService.send(`[Bitget] 포지션 종료 실패: ${e.message}`);
             }
-
-            // 2. Open New Position
-            const markets = await this.marketService.getBitgetTop5Markets();
-            let openedMarket = '';
-
-            for (const targetMarket of markets) {
-                const market = targetMarket.market;
-                try {
-                    await this.orderService.handleBitgetSignal(market, position);
-                    this.logger.log(`[${jobId}] bitget ${market} ${position} 포지션 오픈`);
-                    await this.notificationService.send(`bitget ${market} ${position} 포지션 오픈`);
-                    openedMarket = market;
-                    break;
-                } catch (e: any) {
-                    await this.notificationService.send(`bitget ${market} ${position} 진입 에러: ${e.message}`);
-                    this.logger.error(e);
-                }
-            }
-
-            if (openedMarket) {
-                this.activeBitgetTrade = { market: openedMarket, position };
-            }
-        } catch (e: any) {
-            this.logger.error(e);
-            await this.notificationService.send(`Strategy Job Error: ${e.message}`);
-        }
+        });
+        this.schedulerRegistry.addCronJob(`${jobNameBase}-close`, forceCloseJob);
+        forceCloseJob.start();
     }
 }

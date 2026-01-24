@@ -159,6 +159,92 @@ export class OrderService {
 
     // --- Bitget Logic ---
 
+    async openBitgetMarket(rank: number, position: 'LONG' | 'SHORT', slPercent: number) {
+        // 1. Get Market Info
+        const markets = await this.marketService.getBitgetTop5Markets();
+        const targetMarket = markets.at(rank - 1);
+
+        if (!targetMarket) {
+            throw new Error(`Rank ${rank} market not found`);
+        }
+        const blockchainSymbol = targetMarket.market;
+
+        // 2. Set Leverage
+        await postLeverage({
+            symbol: blockchainSymbol,
+            productType: 'USDT-FUTURES',
+            marginCoin: 'USDT',
+            leverage: '3',
+        });
+
+        // 3. Get Price & Account Info
+        const ticker = await getBitgetTicker({
+            symbol: blockchainSymbol,
+            productType: 'USDT-FUTURES',
+        });
+
+        const account = await getBitgetAccount({
+            symbol: blockchainSymbol,
+            productType: 'USDT-FUTURES',
+            marginCoin: 'USDT',
+        });
+
+        const crossedMaxAvailable = Number(account?.data?.crossedMaxAvailable || 0);
+        const leverage = Number(account?.data?.crossedMarginLeverage || 1);
+        const bidPrice = Number(ticker.data[0]?.bidPr);
+        const askPrice = Number(ticker.data[0]?.askPr);
+
+        // 4. Calculate Size & Price
+        const side: SideType = position === 'SHORT' ? 'sell' : 'buy';
+        const orderPrice = side === 'sell' ? askPrice : bidPrice;
+
+        // Minimum order value logic (ensure > 5 USDT)
+        let inputMargin = crossedMaxAvailable - 2; // buffer 2 USDT
+        const minOrderValue = 5.5;
+
+        if (inputMargin * leverage < minOrderValue) {
+            const requiredMargin = minOrderValue / leverage;
+            inputMargin = crossedMaxAvailable >= requiredMargin ? requiredMargin : crossedMaxAvailable;
+        }
+
+        const size = (inputMargin * leverage) / orderPrice;
+        const formattedSize = Math.floor(size * 1000000) / 1000000;
+
+        if (formattedSize <= 0) {
+            throw new Error(`Calculated size is too small: ${formattedSize}`);
+        }
+
+        // 5. Calculate Stop Loss Price
+        // User Input (ROE) -> Price Movement (ROA) conversion
+        // ROA = ROE / Leverage
+        const roaSlPercent = slPercent / leverage;
+
+        // LONG: Entry * (1 - ROA), SHORT: Entry * (1 + ROA)
+        const stopLossPrice = side === 'buy' ? orderPrice * (1 - roaSlPercent) : orderPrice * (1 + roaSlPercent);
+
+        // 6. Place Order
+        await postBitgetOrder({
+            symbol: blockchainSymbol,
+            productType: 'USDT-FUTURES',
+            marginMode: 'crossed',
+            marginCoin: 'USDT',
+            size: `${formattedSize}`,
+            side: side,
+            tradeSide: 'open',
+            orderType: 'market',
+            presetStopLossPrice: `${bitgetUnitFloor(stopLossPrice)}`,
+        });
+
+        return { market: blockchainSymbol };
+    }
+
+    async closeBitgetMarket(market: string) {
+        await postFlashClosePosition({
+            symbol: market,
+            productType: 'USDT-FUTURES',
+        });
+    }
+
     async handleBitgetSignal(blockchainSymbol: string, message: MsgType) {
         // 현재 포지션 정보 조회
         const allPosition = await getAllPosition({
