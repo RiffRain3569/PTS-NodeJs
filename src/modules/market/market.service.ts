@@ -1,5 +1,6 @@
 import { getCandle, getSpotTickers } from '@/common/apis/bitget.api';
 import { getCandleMinute, getMarket, getTicker } from '@/common/apis/bithumb.api';
+import { getUpbitCandles, getUpbitMarkets, getUpbitTicker } from '@/common/apis/upbit.api';
 import { Injectable } from '@nestjs/common';
 import { MarketRepository } from './infrastructure/market.repository';
 
@@ -23,7 +24,7 @@ export class MarketService {
             [...markets, ...tickers1, ...tickers2].reduce((acc: any, item: any) => {
                 acc[item.market] = { ...acc[item.market], ...item };
                 return acc;
-            }, {})
+            }, {}),
         ).filter((el: any) => !ignoreMarkets.includes(el.market));
 
         const sortedList = mergedList.sort((a: any, b: any) => b.signed_change_rate - a.signed_change_rate);
@@ -38,6 +39,45 @@ export class MarketService {
             .splice(0, 5);
     }
 
+    async getUpbitTop5Markets() {
+        // 1. Get all KRW markets
+        const allMarkets = await getUpbitMarkets();
+        const krwMarkets = allMarkets.filter((m: any) => m.market.startsWith('KRW-'));
+
+        // 2. Get tickers for all KRW markets (Upbit allows multiple markets in one call)
+        // Upbit URL length limit usually allows many markets, but splitting is safer if too many.
+        // Assuming ~100-200 markets, likely fine. Otherwise split into chunks.
+        // Let's split into chunks of 100 just in case.
+        const chunkSize = 100;
+        let allTickers: any[] = [];
+
+        for (let i = 0; i < krwMarkets.length; i += chunkSize) {
+            const chunk = krwMarkets.slice(i, i + chunkSize);
+            const marketStr = chunk.map((m: any) => m.market).join(',');
+            const tickers = await getUpbitTicker(marketStr);
+            allTickers = [...allTickers, ...tickers];
+        }
+
+        // 3. Sort by Trade Price (Volume) or Change Rate?
+        // Bithumb logic uses 'signed_change_rate' desc?
+        // Bithumb Code: sortedList = mergedList.sort((a, b) => b.signed_change_rate - a.signed_change_rate);
+        // User asked for "same logic as Bithumb". So I will sort by Change Rate Descending.
+
+        const sortedList = allTickers.sort((a: any, b: any) => b.signed_change_rate - a.signed_change_rate);
+        const ignoreMarkets = ['KRW-BTT']; // BTT is usually too small, Upbit might have similar.
+
+        return sortedList
+            .filter((t: any) => !ignoreMarkets.includes(t.market))
+            .slice(0, 5)
+            .map((t: any) => ({
+                market: t.market,
+                // korean_name is in market info, not ticker. Need to merge.
+                korean_name: krwMarkets.find((m: any) => m.market === t.market)?.korean_name || t.market,
+                trade_price: t.trade_price,
+                change_rate: `${(t.signed_change_rate * 100).toFixed(2)}%`,
+            }));
+    }
+
     async getBitgetTop5Markets() {
         const response = await getSpotTickers();
         if (response.code !== '00000') {
@@ -48,20 +88,20 @@ export class MarketService {
         const usdtMarkets = markets.filter((m: any) => m.symbol.endsWith('USDT'));
 
         const sortedList = usdtMarkets.sort((a: any, b: any) => {
-            return parseFloat(b.changeUtc24h) - parseFloat(a.changeUtc24h);
+            return parseFloat(b.change24h) - parseFloat(a.change24h);
         });
 
         return sortedList.slice(0, 5).map((m: any) => {
             return {
                 market: m.symbol,
                 trade_price: m.lastPr,
-                change_rate: `${(parseFloat(m.changeUtc24h) * 100).toFixed(2)}%`,
+                change_rate: `${(parseFloat(m.change24h) * 100).toFixed(2)}%`,
             };
         });
     }
 
     async calculateTradeResult(
-        exchange: 'bitget' | 'bithumb',
+        exchange: 'bitget' | 'bithumb' | 'upbit',
         symbol: string,
         baseTime: Date,
         options: {
@@ -69,7 +109,7 @@ export class MarketService {
             side?: 'LONG' | 'SHORT';
             runId?: number;
             priceBasis?: 'last' | 'mark';
-        } = {}
+        } = {},
     ): Promise<void> {
         const { runId, priceBasis = 'last' } = options;
 
@@ -102,13 +142,34 @@ export class MarketService {
             if (response.code === '00000') {
                 candles = response.data;
             }
+        } else if (exchange === 'upbit') {
+            marketType = 'SPOT_KRW';
+            const diffMin = holdingMinutes + 10;
+            // Upbit API 'to' is UTC ISO string or similar.
+            // Docs say: to: 마지막 캔들 시각 (exclusive). 포맷 : yyyy-MM-dd'T'HH:mm:ss'Z' or yyyy-MM-dd HH:mm:ss
+            // Upbit response is KST by default? No, usually UTC in API response but query 'to' can be varying.
+            // Let's use UTC ISO string.
+            // But verify: Upbit API generally returns UTC KST?
+            // Upbit candles are returned in KST (candle_date_time_kst) and UTC (candle_date_time_utc).
+            // Request 'to' is ideally UTC.
+            // Upbit API: If user wants KST input
+            const kstOffset = 9 * 60 * 60 * 1000;
+            const exitTimeForString = new Date(exitTimeMp + 60 * 1000 + kstOffset);
+            const toStr = exitTimeForString.toISOString().replace('T', ' ').slice(0, 19);
+
+            // count limit is 200. if diffMin > 200, need loop?
+            // holdingMinutes = 120 (default for Spot). So 200 is enough.
+            const response = await getUpbitCandles(symbol, 1, Math.min(diffMin, 200), toStr);
+            if (Array.isArray(response)) {
+                candles = response;
+            }
         } else {
             marketType = 'SPOT_KRW';
             const diffMin = holdingMinutes + 10;
             // Bithumb API expects KST for the 'to' parameter
             const kstOffset = 9 * 60 * 60 * 1000;
-            const exitTimeKst = new Date(exitTimeMp + 60 * 1000 + kstOffset);
-            const toStr = exitTimeKst.toISOString().replace('T', ' ').slice(0, 19);
+            const exitTimeForString = new Date(exitTimeMp + 60 * 1000 + kstOffset);
+            const toStr = exitTimeForString.toISOString().replace('T', ' ').slice(0, 19);
 
             const response = await getCandleMinute({
                 market: symbol,
@@ -122,9 +183,8 @@ export class MarketService {
 
         if (!candles || candles.length === 0) {
             // Convert to KST for storage
-            const kstOffset = 9 * 60 * 60 * 1000;
-            const entryTimeKst = new Date(entryTimeMp + kstOffset);
-            const exitTimeKst = new Date(exitTimeMp + kstOffset);
+            const entryTimeKst = new Date(entryTimeMp);
+            const exitTimeKst = new Date(exitTimeMp);
 
             await this.marketRepository.saveTradeResult({
                 exchange,
@@ -160,6 +220,14 @@ export class MarketService {
                         close: parseFloat(c[4]),
                         open: parseFloat(c[1]),
                     };
+                } else if (exchange === 'upbit') {
+                    return {
+                        time: new Date(c.candle_date_time_utc + 'Z').getTime(), // Upbit returns "2023-01-01T00:00:00" (UTC string)
+                        high: c.high_price,
+                        low: c.low_price,
+                        close: c.trade_price,
+                        open: c.opening_price,
+                    };
                 } else {
                     if (c.candle_date_time_utc) {
                         // Object format
@@ -190,12 +258,11 @@ export class MarketService {
             console.warn(
                 `[MarketService] No candles in range for ${symbol}. Entry: ${entryTimeMp}, Exit: ${exitTimeMp}, FirstCandle: ${
                     candles[0]?.[0] || candles[0]?.candle_date_time_utc
-                }`
+                }`,
             );
             // Convert to KST for storage
-            const kstOffset = 9 * 60 * 60 * 1000;
-            const entryTimeKst = new Date(entryTimeMp + kstOffset);
-            const exitTimeKst = new Date(exitTimeMp + kstOffset);
+            const entryTimeKst = new Date(entryTimeMp);
+            const exitTimeKst = new Date(exitTimeMp);
 
             await this.marketRepository.saveTradeResult({
                 exchange,
@@ -250,9 +317,8 @@ export class MarketService {
         }
 
         // Convert to KST for storage
-        const kstOffset = 9 * 60 * 60 * 1000;
-        const entryTimeKst = new Date(entryTimeMp + kstOffset);
-        const exitTimeKst = new Date(exitTimeMp + kstOffset);
+        const entryTimeKst = new Date(entryTimeMp);
+        const exitTimeKst = new Date(exitTimeMp);
 
         await this.marketRepository.saveTradeResult({
             exchange,
@@ -277,17 +343,16 @@ export class MarketService {
     }
 
     async recordOpenTrade(
-        exchange: 'bitget' | 'bithumb',
+        exchange: 'bitget' | 'bithumb' | 'upbit',
         symbol: string,
         entryTime: Date,
         holdingMinutes: number,
         entryPrice: string,
         side: 'LONG' | 'SHORT' = 'LONG',
-        runId?: number
+        runId?: number,
     ): Promise<void> {
         // Convert to KST for consistency with storage
-        const kstOffset = 9 * 60 * 60 * 1000;
-        const entryTimeKst = new Date(entryTime.getTime() + kstOffset);
+        const entryTimeKst = entryTime;
         // Note: Exit time logic is usually E + Holding.
         // We set exit_time in DB so we can query "when should I close this?"
         // But repository.findPendingTrades compares `DATE_ADD(entry_time, holding) <= now`.

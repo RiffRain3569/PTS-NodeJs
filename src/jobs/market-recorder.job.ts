@@ -7,7 +7,10 @@ import { Cron } from '@nestjs/schedule';
 export class MarketRecorderJob {
     private readonly logger = new Logger(MarketRecorderJob.name);
 
-    constructor(private readonly marketService: MarketService, private readonly marketRepository: MarketRepository) {}
+    constructor(
+        private readonly marketService: MarketService,
+        private readonly marketRepository: MarketRepository,
+    ) {}
 
     @Cron('0 1 * * * *')
     async handleCron() {
@@ -59,7 +62,7 @@ export class MarketRecorderJob {
                         60,
                         item.trade_price,
                         'LONG',
-                        bitgetRunId
+                        bitgetRunId,
                     );
                     // SHORT
                     await this.marketService.recordOpenTrade(
@@ -69,7 +72,7 @@ export class MarketRecorderJob {
                         60,
                         item.trade_price,
                         'SHORT',
-                        bitgetRunId
+                        bitgetRunId,
                     );
                 } catch (err: any) {
                     this.logger.warn(`Failed to open Bitget trade for ${symbol}: ${err.message}`);
@@ -90,10 +93,31 @@ export class MarketRecorderJob {
                         120,
                         item.trade_price.toString(), // Ensure string
                         'LONG',
-                        bithumbRunId
+                        bithumbRunId,
                     );
                 } catch (err: any) {
                     this.logger.warn(`Failed to open Bithumb trade for ${symbol}: ${err.message}`);
+                }
+            }
+
+            // 4. Open New Trades (Upbit)
+            const upbitRunId = await this.marketRepository.createJobRun('upbit', 'hourly', 120, 'last', 'UTC');
+            const upbitMarkets = await this.marketService.getUpbitTop5Markets();
+
+            for (const item of upbitMarkets) {
+                const symbol = item.market;
+                try {
+                    await this.marketService.recordOpenTrade(
+                        'upbit',
+                        symbol,
+                        now,
+                        120,
+                        item.trade_price.toString(),
+                        'LONG',
+                        upbitRunId,
+                    );
+                } catch (err: any) {
+                    this.logger.warn(`Failed to open Upbit trade for ${symbol}: ${err.message}`);
                 }
             }
 

@@ -15,7 +15,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             waitForConnections: true,
             connectionLimit: 10,
             queueLimit: 0,
-            timezone: 'Z', // UTC
+            timezone: '+09:00', // KST
             enableKeepAlive: true,
             keepAliveInitialDelay: 0,
         });

@@ -1,3 +1,4 @@
+import { MarketRepository } from '@/modules/market/infrastructure/market.repository';
 import { MarketService } from '@/modules/market/market.service';
 import { NotificationService } from '@/modules/notification/notification.service';
 import { BitgetOrderService } from '@/modules/order/providers/bitget-order.service';
@@ -34,6 +35,7 @@ export class StrategyJob implements OnModuleInit {
         private readonly notificationService: NotificationService,
         private readonly marketService: MarketService,
         private readonly schedulerRegistry: SchedulerRegistry,
+        private readonly marketRepository: MarketRepository,
     ) {}
 
     onModuleInit() {
@@ -41,13 +43,7 @@ export class StrategyJob implements OnModuleInit {
             // --- Configuration Area ---
             this.holdHour({ hour: 5, second: 2, top: 1, askPercent: 0.1 });
             // this.bitgetHoldHour({ hour: 9, top: 1, position: 'LONG', slPercent: 0.05 });
-        } else {
-            this.test();
         }
-    }
-
-    async test() {
-        console.log(await this.marketService.getBitgetTop5Markets());
     }
 
     holdHour({ hour, second = 0, duringHour = 2, top = 1, askPercent }: HoldHourOptions) {

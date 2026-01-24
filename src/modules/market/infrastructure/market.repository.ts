@@ -11,8 +11,8 @@ export class MarketRepository {
         scheduleInterval: string,
         baseHoldingMinutes: number,
         priceBasis: string,
-        timezone: string = 'UTC',
-        note?: string
+        timezone: string = 'KST',
+        note?: string,
     ): Promise<number> {
         const sql = `
             INSERT INTO job_run 
@@ -78,7 +78,7 @@ export class MarketRepository {
         symbol: string,
         side: string,
         entry_time: Date,
-        holding_minutes: number
+        holding_minutes: number,
     ): Promise<TradeResult | null> {
         const sql = `
             SELECT * FROM trade_result
@@ -94,7 +94,7 @@ export class MarketRepository {
         exchange: string,
         startDate: Date,
         endDate: Date,
-        hour?: number
+        hour?: number,
     ): Promise<TradeResult[]> {
         let sql = `
             SELECT * FROM trade_result

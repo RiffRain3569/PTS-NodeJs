@@ -1,6 +1,6 @@
 export interface TradeResult {
     id?: number;
-    exchange: 'bitget' | 'bithumb';
+    exchange: 'bitget' | 'bithumb' | 'upbit';
     market_type: string;
     symbol: string;
     side: 'LONG' | 'SHORT';
