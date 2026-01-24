@@ -66,7 +66,8 @@ export class MarketExportService {
         if (targetHours && targetHours.length > 0) {
             for (const h of targetHours) {
                 // Filter by hour (local/absolute hour from DB)
-                const hourData = positionFiltered.filter((r) => r.entry_time.getHours() === h);
+                // Use getUTCHours() because DB stores local time as UTC (Fake UTC)
+                const hourData = positionFiltered.filter((r) => r.entry_time.getUTCHours() === h);
                 this.createSheet(wb, hourData, `${h}시`, topN, dedupSymbol, sortBy);
             }
         } else {
@@ -197,55 +198,6 @@ export class MarketExportService {
         ws['!cols'] = wscols;
 
         XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    }
-
-    private getUtcHour(localHour: number, timezone: string): number {
-        // Find corresponding UTC hour for the given localHour in timezone
-        // Iterate 0-23 UTC hours of a dummy day
-        for (let h = 0; h < 24; h++) {
-            const date = new Date(Date.UTC(2025, 0, 1, h, 0, 0)); // Jan 1st
-            const parts = new Intl.DateTimeFormat('en-US', {
-                hour: 'numeric',
-                hourCycle: 'h23',
-                timeZone: timezone,
-            }).formatToParts(date);
-
-            const tzHour = parseInt(parts.find((p) => p.type === 'hour')?.value || '0', 10);
-            if (tzHour === localHour) {
-                return h;
-            }
-        }
-        return localHour; // Fallback
-    }
-
-    private getBucketKey(date: Date, timezone: string): string {
-        try {
-            // Basic implementation using Intl
-            const formatter = new Intl.DateTimeFormat('en-CA', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                hourCycle: 'h23',
-                timeZone: timezone,
-            });
-
-            const parts = formatter.formatToParts(date);
-            const getPart = (type: string) => parts.find((p) => p.type === type)?.value || '';
-
-            const y = getPart('year');
-            const mo = getPart('month');
-            const d = getPart('day');
-            const h = getPart('hour');
-            const m = getPart('minute');
-
-            // Return YYYY-MM-DD HH:mm
-            return `${y}-${mo}-${d} ${h}:${m}`;
-            // If we want seconds: return `${y}-${month}-${d} ${h}:${m}:${s}`;
-        } catch (e) {
-            // Fallback to UTC ISO string (YYYY-MM-DD HH:mm)
-            return date.toISOString().slice(0, 16).replace('T', ' ');
-        }
     }
 
     private getBucketKeyAsIs(date: Date): string {
