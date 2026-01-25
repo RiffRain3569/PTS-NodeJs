@@ -21,8 +21,7 @@ export class MarketRecorderJob {
         this.logger.debug('Starting Market Recorder Job...');
         const now = new Date();
         now.setSeconds(0, 0); // Truncate to minute precision for deduplication
-        const kstOffset = 9 * 60 * 60 * 1000;
-        const nowKst = new Date(now.getTime() + kstOffset);
+        const nowKst = now;
 
         try {
             // 1. Close Pending Trades
@@ -32,11 +31,10 @@ export class MarketRecorderJob {
 
             for (const trade of pendingTrades) {
                 try {
-                    // Convert KST entry time back to UTC for calculation logic
-                    // logic: stored = UTC + offset. So UTC = stored - offset.
-                    const entryTimeUtc = new Date(trade.entry_time.getTime() - kstOffset);
+                    // Pass stored time directly (no offset) as KST standardization is complete
+                    const entryTime = trade.entry_time;
 
-                    await this.marketService.calculateTradeResult(trade.exchange, trade.symbol, entryTimeUtc, {
+                    await this.marketService.calculateTradeResult(trade.exchange, trade.symbol, entryTime, {
                         holdingMinutes: trade.holding_minutes,
                         side: trade.side,
                         runId: trade.run_id || undefined,
@@ -48,7 +46,7 @@ export class MarketRecorderJob {
             }
 
             // 2. Open New Trades (Bitget)
-            const bitgetRunId = await this.marketRepository.createJobRun('bitget', 'hourly', 60, 'last', 'UTC');
+            const bitgetRunId = await this.marketRepository.createJobRun('bitget', 'hourly', 60, 'last', 'KST');
             const bitgetMarkets = await this.marketService.getBitgetTop5Markets();
 
             for (const item of bitgetMarkets) {
@@ -80,7 +78,7 @@ export class MarketRecorderJob {
             }
 
             // 3. Open New Trades (Bithumb)
-            const bithumbRunId = await this.marketRepository.createJobRun('bithumb', 'hourly', 120, 'last', 'UTC');
+            const bithumbRunId = await this.marketRepository.createJobRun('bithumb', 'hourly', 120, 'last', 'KST');
             const bithumbMarkets = await this.marketService.getTop5Markets();
 
             for (const item of bithumbMarkets) {
@@ -101,7 +99,7 @@ export class MarketRecorderJob {
             }
 
             // 4. Open New Trades (Upbit)
-            const upbitRunId = await this.marketRepository.createJobRun('upbit', 'hourly', 120, 'last', 'UTC');
+            const upbitRunId = await this.marketRepository.createJobRun('upbit', 'hourly', 120, 'last', 'KST');
             const upbitMarkets = await this.marketService.getUpbitTop5Markets();
 
             for (const item of upbitMarkets) {
