@@ -250,7 +250,7 @@ export class MarketService {
                     }
                 }
             })
-            .filter((c) => c.time >= entryTimeMp && c.time <= exitTimeMp);
+            .filter((c) => c.time >= Math.floor(entryTimeMp / 60000) * 60000 && c.time <= exitTimeMp);
 
         parsedCandles.sort((a, b) => a.time - b.time);
 
