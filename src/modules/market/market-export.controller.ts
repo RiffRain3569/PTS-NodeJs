@@ -118,6 +118,7 @@ export class MarketExportController {
             <select id="exchange" onchange="handleExchangeChange()">
                 <option value="bithumb" selected>Bithumb</option>
                 <option value="bitget">Bitget</option>
+                <option value="upbit">Upbit</option>
             </select>
         </div>
 
@@ -170,7 +171,7 @@ export class MarketExportController {
             const exchange = document.getElementById('exchange').value;
             const positionSelect = document.getElementById('position');
             
-            if (exchange === 'bithumb') {
+            if (exchange === 'bithumb' || exchange === 'upbit') {
                 positionSelect.value = 'LONG';
                 positionSelect.disabled = true;
             } else {
@@ -252,7 +253,7 @@ export class MarketExportController {
     async exportTop(
         @Param('exchange') exchange: string,
         @Query() query: any,
-        @Res({ passthrough: true }) res: Response
+        @Res({ passthrough: true }) res: Response,
     ): Promise<void> {
         try {
             const {
@@ -275,31 +276,17 @@ export class MarketExportController {
             let finalEndDate: Date;
 
             if (startDate) {
-                finalStartDate = new Date(`${startDate}T00:00:00Z`); // Treat input as UTC date part or handle correctly?
-                // Actually user inputs YYYY-MM-DD.
-                // If we assume user input is in 'timezone' context, it gets complicated.
-                // Usually date params are interpreted as YYYY-MM-DD in the REQUARER's view?
-                // BUT standard API practice: YYYY-MM-DD implies 00:00 to 23:59 of that day.
-                // The task says "date=YYYY-MM-DD -> 00:00 ~ 23:59:59".
-                // Let's interpret YYYY-MM-DD as simple string and construct ISO string.
-                // However, since we compare against `entry_time` (stored as Date/UTC),
-                // we should probably convert these bounds to UTC or rely on string comparison if DB supports it.
-                // Best practice: Convert YYYY-MM-DD to start of day in the requested `timezone`, then convert that instant to UTC Date object for DB query.
-                // BUT, to keep it simple and effective (and since DB might use UTC):
-                // Let's assume input dates are UTC-based dates (YYYY-MM-DD 00:00:00 UTC).
-                // If user wants KST range, they should shift date or we accept that limitation.
-                // OR, simplest: YYYY-MM-DD is UTC.
-
-                finalStartDate = new Date(`${startDate}T00:00:00Z`);
+                // Remove Z to interpret as Local Time (KST)
+                finalStartDate = new Date(`${startDate}T00:00:00`);
 
                 if (endDate) {
-                    finalEndDate = new Date(`${endDate}T23:59:59.999Z`);
+                    finalEndDate = new Date(`${endDate}T23:59:59.999`);
                 } else {
-                    finalEndDate = new Date(`${startDate}T23:59:59.999Z`);
+                    finalEndDate = new Date(`${startDate}T23:59:59.999`);
                 }
             } else if (date) {
-                finalStartDate = new Date(`${date}T00:00:00Z`);
-                finalEndDate = new Date(`${date}T23:59:59.999Z`);
+                finalStartDate = new Date(`${date}T00:00:00`);
+                finalEndDate = new Date(`${date}T23:59:59.999`);
             } else {
                 throw new BadRequestException('date or startDate/endDate is required');
             }

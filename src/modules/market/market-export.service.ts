@@ -44,13 +44,13 @@ export class MarketExportService {
         const effectiveQueryHour = targetHours && targetHours.length > 0 ? undefined : queryHour;
 
         console.log(
-            `[Export] Querying: ${exchange}, ${startDate} ~ ${endDate}, HourFilter: ${effectiveQueryHour ?? 'ALL'}`
+            `[Export] Querying: ${exchange}, ${startDate} ~ ${endDate}, HourFilter: ${effectiveQueryHour ?? 'ALL'}`,
         );
         const results = await this.marketRepository.findTradeResultsInRange(
             exchange,
             startDate,
             endDate,
-            effectiveQueryHour
+            effectiveQueryHour,
         );
         console.log(`[Export] Found ${results ? results.length : 0} results`);
 
@@ -66,8 +66,12 @@ export class MarketExportService {
         if (targetHours && targetHours.length > 0) {
             for (const h of targetHours) {
                 // Filter by hour (local/absolute hour from DB)
-                // Use getUTCHours() because DB stores local time as UTC (Fake UTC)
-                const hourData = positionFiltered.filter((r) => r.entry_time.getUTCHours() === h);
+                // Filter by hour (local/absolute hour from DB)
+                // Convert UTC timestamp to KST hour (UTC+9)
+                const hourData = positionFiltered.filter((r) => {
+                    const rKstHour = (r.entry_time.getUTCHours() + 9) % 24;
+                    return rKstHour === h;
+                });
                 this.createSheet(wb, hourData, `${h}시`, topN, dedupSymbol, sortBy);
             }
         } else {
@@ -87,12 +91,12 @@ export class MarketExportService {
         sheetName: string,
         topN: number,
         dedupSymbol: boolean,
-        sortBy: 'exit_roi_pct' | 'max_roi_pct' | 'min_roi_pct' | 'id'
+        sortBy: 'exit_roi_pct' | 'max_roi_pct' | 'min_roi_pct' | 'id',
     ) {
         const buckets = new Map<string, TradeResult[]>();
 
         for (const trade of data) {
-            const bucketKey = this.getBucketKeyAsIs(trade.entry_time);
+            const bucketKey = this.getBucketKeyKst(trade.entry_time);
             if (!buckets.has(bucketKey)) {
                 buckets.set(bucketKey, []);
             }
@@ -200,9 +204,9 @@ export class MarketExportService {
         XLSX.utils.book_append_sheet(wb, ws, sheetName);
     }
 
-    private getBucketKeyAsIs(date: Date): string {
-        // Return YYYY-MM-DD HH:mm from "UTC" components directly
-        // Because DB stores local time as UTC-date (e.g. 09:00 KST stored as 09:00Z)
-        return date.toISOString().slice(0, 16).replace('T', ' ');
+    private getBucketKeyKst(date: Date): string {
+        // Convert UTC Date to KST String (YYYY-MM-DD HH:mm)
+        const kstDate = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+        return kstDate.toISOString().slice(0, 16).replace('T', ' ');
     }
 }
