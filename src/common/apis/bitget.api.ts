@@ -1,4 +1,5 @@
 import { GET, POST } from '@/common/config/httpMethod.config';
+import { kstToUtcTimestamp } from '@/common/utils/date.utils';
 import { bitgetApi } from './fetchers/bitget.fetcher';
 
 type GetTickerTypes = {
@@ -31,16 +32,23 @@ export const getCandle = async ({
 }: {
     symbol: string;
     granularity: string;
-    startTime: string;
-    endTime: string;
+    startTime: string | number | Date;
+    endTime: string | number | Date;
     productType?: string;
 }) => {
     // Bitget V2 Mix Candle
     // granularity: 1m, 5m, 1h, 1d, etc.
+    // startTime/endTime: Supports KST string input (YYYY-MM-DD HH:mm:ss) -> Converted to UTC Timestamp via kstToUtcTimestamp
     return await bitgetApi({
         uri: `/api/v2/mix/market/candles`,
         method: GET,
-        reqData: { symbol, granularity, startTime, endTime, productType },
+        reqData: {
+            symbol,
+            granularity,
+            startTime: kstToUtcTimestamp(startTime), // Converts KST inputs to UTC Milliseconds
+            endTime: kstToUtcTimestamp(endTime), // Converts KST inputs to UTC Milliseconds
+            productType,
+        },
     });
 };
 
