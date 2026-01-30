@@ -2,6 +2,7 @@ import {
     deleteOrder,
     getAccount as getBithumbAccount,
     getOrder as getBithumbOrder,
+    getCandleMinute,
     getOrderList,
     postOrder as postBithumbOrder,
 } from '@/common/apis/bithumb.api';
@@ -74,7 +75,7 @@ export class BithumbOrderService {
         return markets;
     }
 
-    async askBithumbLimit(markets: any[], percent: number) {
+    async askBithumbLimit(markets: any[], percent: number, type: 'avg' | 'candle' = 'avg') {
         const apiKey = process.env.API_KEY as string;
         const secret = process.env.SECRET_KEY as string;
         const accounts = await getBithumbAccount({ apiKey, secret });
@@ -82,11 +83,19 @@ export class BithumbOrderService {
 
         let uuids = [];
         for (const { market } of markets) {
-            const avg_buy_price = accounts.find((el: any) => el.currency === market.split('-').at(1))?.avg_buy_price;
+            let basisPrice = 0;
+            if (type === 'avg') {
+                basisPrice = Number(accounts.find((el: any) => el.currency === market.split('-').at(1))?.avg_buy_price);
+            } else {
+                const candles = await getCandleMinute({ market, count: 2 });
+                // @ts-ignore
+                basisPrice = candles.at(1).trade_price;
+            }
+
             const data = await getBithumbOrder({ market, apiKey, secret });
 
             const askOkBalance = Number(data?.ask_account?.balance);
-            const price = `${bithumbUnitFloor(avg_buy_price * (1 + targetPercent))}`;
+            const price = `${bithumbUnitFloor(basisPrice * (1 + targetPercent))}`;
 
             if (askOkBalance === 0) {
                 throw { error: 'NOT_BALANCE', message: '보유하지 않았습니다.' };

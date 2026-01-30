@@ -21,7 +21,7 @@ export const getTicker = async ({ markets }: { markets: string }) => {
     });
 };
 
-export const getCandleMinute = async ({ market, to, count }: { market: string; to: string; count: number }) => {
+export const getCandleMinute = async ({ market, to, count }: { market: string; to?: string; count: number }) => {
     return await bithumbPublicApi({
         uri: `/v1/candles/minutes/1`,
         method: GET,
