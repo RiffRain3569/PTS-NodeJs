@@ -3,6 +3,7 @@ import { MarketService } from '@/modules/market/market.service';
 import { NotificationService } from '@/modules/notification/notification.service';
 import { BitgetOrderService } from '@/modules/order/providers/bitget-order.service';
 import { BithumbOrderService } from '@/modules/order/providers/bithumb-order.service';
+import { UpbitOrderService } from '@/modules/order/providers/upbit-order.service';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
@@ -32,6 +33,7 @@ export class StrategyJob implements OnModuleInit {
     constructor(
         private readonly bithumbOrderService: BithumbOrderService,
         private readonly bitgetOrderService: BitgetOrderService,
+        private readonly upbitOrderService: UpbitOrderService,
         private readonly notificationService: NotificationService,
         private readonly marketService: MarketService,
         private readonly schedulerRegistry: SchedulerRegistry,
@@ -42,7 +44,10 @@ export class StrategyJob implements OnModuleInit {
         if (process.env.NODE_ENV === 'production') {
             // --- Configuration Area ---
             this.holdHour({ hour: 5, second: 2, top: 1, askPercent: 0.1 });
+            // this.upbitHoldHour({ hour: 6, second: 2, top: 1, askPercent: 0.1 });
             // this.bitgetHoldHour({ hour: 9, top: 1, position: 'LONG', slPercent: 0.05 });
+        } else {
+            this.upbitHoldHour({ hour: 9, second: 2, top: 1, askPercent: 0.1 });
         }
     }
 
@@ -155,5 +160,80 @@ export class StrategyJob implements OnModuleInit {
         });
         this.schedulerRegistry.addCronJob(`${jobNameBase}-close`, forceCloseJob);
         forceCloseJob.start();
+    }
+
+    upbitHoldHour({ hour, second = 0, duringHour = 1, top = 1, askPercent }: HoldHourOptions) {
+        console.log('upbitHoldHour options:', { hour, second, duringHour, top, askPercent });
+        console.log('Current Process Time:', new Date().toString());
+
+        let market: any;
+        const jobNameBase = `upbitHoldHour-${hour}-${second}`;
+
+        // 1. Buy & Sell Reserve Job (Combined)
+        const buyAndSellJob = new CronJob(
+            `${second} 1 ${hour} * * *`,
+            async () => {
+                console.log('buyAndSellJob (Upbit) triggered', new Date().toString());
+                try {
+                    // 1-1. Buy
+                    market = await this.upbitOrderService.bidUpbitTop(top);
+                    this.logger.log(`[Upbit] ${market.korean_name} 매수 완료`);
+                    await this.notificationService.send(`[Upbit] ${market.korean_name} 매수 완료`);
+
+                    // 1-2. Wait 10 seconds
+                    await new Promise((resolve) => setTimeout(resolve, 10000));
+
+                    // 1-3. Sell Reserve
+                    if (!!market?.market) {
+                        const uuids = await this.upbitOrderService.askUpbitLimit([market], askPercent, 'candle');
+                        this.logger.log(`[Upbit] ${uuids.join(', ')} 매도 예약 완료`);
+                        await this.notificationService.send(`[Upbit] ${uuids.join(', ')} 매도 예약 완료`);
+                    }
+                } catch (e: any) {
+                    this.logger.error(e);
+                    await this.notificationService.send(`[Upbit] 매수/매도 예약 실패: ${e.message}`);
+                }
+            },
+            null,
+            false,
+            'Asia/Seoul',
+        );
+        this.schedulerRegistry.addCronJob(`${jobNameBase}-buy-sell`, buyAndSellJob);
+        buyAndSellJob.start();
+        this.logger.log(`[${jobNameBase}-buy-sell] Next run: ${buyAndSellJob.nextDate().toString()}`);
+
+        // 2. Force Sell Job
+        const forceSellJob = new CronJob(
+            `${second - 2} 1 ${(hour + duringHour) % 24} * * *`,
+            async () => {
+                try {
+                    const waitingMarkets = await this.upbitOrderService.deleteUpbitOrders();
+                    const marketNames = waitingMarkets.map(({ market }: any) => market);
+
+                    // Fallback: If no orders were cancelled but we have a market from buy job
+                    if (market?.market && !marketNames.includes(market.market)) {
+                        marketNames.push(market.market);
+                    }
+
+                    if (marketNames.length > 0) {
+                        // Wait for balance update (latency)
+                        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+                        await this.upbitOrderService.askUpbitMarket(marketNames);
+                        this.logger.log(`[Upbit] ${marketNames.join(', ')} 매도 완료`);
+                        await this.notificationService.send(`[Upbit] ${marketNames.join(', ')} 매도 완료`);
+                    }
+                } catch (e: any) {
+                    this.logger.error(e);
+                    await this.notificationService.send(`[Upbit] 매도 에러: ${e.message}`);
+                }
+            },
+            null,
+            false,
+            'Asia/Seoul',
+        );
+        this.schedulerRegistry.addCronJob(`${jobNameBase}-forceSell`, forceSellJob);
+        forceSellJob.start();
+        this.logger.log(`[${jobNameBase}-forceSell] Next run: ${forceSellJob.nextDate().toString()}`);
     }
 }

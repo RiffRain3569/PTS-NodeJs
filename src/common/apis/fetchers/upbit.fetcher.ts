@@ -32,12 +32,10 @@ export const upbitApi = async ({
     };
 
     if (reqData && Object.keys(reqData).length > 0) {
-        if (isGet) {
-            const hash = crypto.createHash('sha512');
-            const queryHash = hash.update(stringify(reqData, { encode: true }), 'utf-8').digest('hex');
-            payload.query_hash = queryHash;
-            payload.query_hash_alg = 'SHA512';
-        }
+        const hash = crypto.createHash('sha512');
+        const queryHash = hash.update(stringify(reqData, { encode: true }), 'utf-8').digest('hex');
+        payload.query_hash = queryHash;
+        payload.query_hash_alg = 'SHA512';
     }
 
     const token = jwt.sign(payload, SECRET_KEY);
