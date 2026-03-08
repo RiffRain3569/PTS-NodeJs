@@ -17,7 +17,7 @@ type SideType = 'buy' | 'sell';
 export class BitgetOrderService {
     constructor(private readonly marketService: MarketService) {}
 
-    async openBitgetMarket(rank: number, position: 'LONG' | 'SHORT', slPercent: number) {
+    async openBitgetMarket(rank: number, position: 'LONG' | 'SHORT', slPercent?: number) {
         // 1. Get Market Info
         const markets = await this.marketService.getBitgetTop5Markets();
         const targetMarket = markets.at(rank - 1);
@@ -73,12 +73,14 @@ export class BitgetOrderService {
         }
 
         // 5. Calculate Stop Loss Price
-        // User Input (ROE) -> Price Movement (ROA) conversion
-        // ROA = ROE / Leverage
-        const roaSlPercent = slPercent / leverage;
-
-        // LONG: Entry * (1 - ROA), SHORT: Entry * (1 + ROA)
-        const stopLossPrice = side === 'buy' ? orderPrice * (1 - roaSlPercent) : orderPrice * (1 + roaSlPercent);
+        let stopLossPrice;
+        if (slPercent !== undefined) {
+            // User Input (ROE) -> Price Movement (ROA) conversion
+            // ROA = ROE / Leverage
+            const roaSlPercent = slPercent / leverage;
+            // LONG: Entry * (1 - ROA), SHORT: Entry * (1 + ROA)
+            stopLossPrice = side === 'buy' ? orderPrice * (1 - roaSlPercent) : orderPrice * (1 + roaSlPercent);
+        }
 
         // 6. Place Order
         await postBitgetOrder({
@@ -90,7 +92,7 @@ export class BitgetOrderService {
             side: side,
             tradeSide: 'open',
             orderType: 'market',
-            presetStopLossPrice: `${bitgetUnitFloor(stopLossPrice)}`,
+            ...(stopLossPrice !== undefined && { presetStopLossPrice: `${bitgetUnitFloor(stopLossPrice)}` }),
         });
 
         return { market: blockchainSymbol };

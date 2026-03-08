@@ -23,7 +23,7 @@ interface BitgetHoldHourOptions {
     duringHour?: number;
     top?: number;
     position: 'LONG' | 'SHORT';
-    slPercent: number;
+    slPercent?: number;
 }
 
 @Injectable()
@@ -48,22 +48,22 @@ export class StrategyJob implements OnModuleInit {
             this.upbitHoldHour({ hour: 4, second: 2, top: 1, askPercent: 0.1 });
             this.upbitHoldHour({ hour: 17, second: 2, top: 1, askPercent: 0.1 });
 
-            this.bitgetHoldHour({ hour: 5, second: 5, top: 1, position: 'LONG', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 10, second: 5, top: 1, position: 'LONG', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 12, second: 5, top: 2, position: 'LONG', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 15, second: 5, top: 1, position: 'LONG', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 18, second: 5, top: 3, position: 'LONG', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 5, second: 5, top: 1, position: 'LONG' });
+            this.bitgetHoldHour({ hour: 10, second: 5, top: 1, position: 'LONG' });
+            this.bitgetHoldHour({ hour: 12, second: 5, top: 2, position: 'LONG' });
+            this.bitgetHoldHour({ hour: 15, second: 5, top: 1, position: 'LONG' });
+            this.bitgetHoldHour({ hour: 18, second: 5, top: 3, position: 'LONG' });
 
-            this.bitgetHoldHour({ hour: 0, second: 5, top: 4, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 1, second: 5, top: 5, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 3, second: 5, top: 3, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 4, second: 5, top: 1, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 6, second: 5, top: 1, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 8, second: 5, top: 3, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 11, second: 5, top: 2, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 13, second: 5, top: 1, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 17, second: 5, top: 1, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 19, second: 5, top: 1, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 0, second: 5, top: 4, position: 'SHORT' });
+            this.bitgetHoldHour({ hour: 1, second: 5, top: 5, position: 'SHORT' });
+            this.bitgetHoldHour({ hour: 3, second: 5, top: 3, position: 'SHORT' });
+            this.bitgetHoldHour({ hour: 4, second: 5, top: 1, position: 'SHORT' });
+            this.bitgetHoldHour({ hour: 6, second: 5, top: 1, position: 'SHORT' });
+            this.bitgetHoldHour({ hour: 8, second: 5, top: 3, position: 'SHORT' });
+            this.bitgetHoldHour({ hour: 11, second: 5, top: 2, position: 'SHORT' });
+            this.bitgetHoldHour({ hour: 13, second: 5, top: 1, position: 'SHORT' });
+            this.bitgetHoldHour({ hour: 17, second: 5, top: 1, position: 'SHORT' });
+            this.bitgetHoldHour({ hour: 19, second: 5, top: 1, position: 'SHORT' });
         }
     }
 
@@ -148,14 +148,20 @@ export class StrategyJob implements OnModuleInit {
 
         // 1. Open Job
         const openJob = new CronJob(
-            `${second} 1 ${hour} * * *`,
+            `${second} 16 ${hour} * * *`,
             async () => {
                 this.logger.log(`bitget test`);
                 try {
                     const result = await this.bitgetOrderService.openBitgetMarket(top, position, slPercent);
                     market = result.market;
-                    this.logger.log(`[Bitget] ${market} ${position} 진입 완료 (SL: ${slPercent * 100}%)`);
-                    await this.notificationService.send(`[Bitget] ${market} ${position} 진입 완료`);
+
+                    const logMessage =
+                        slPercent !== undefined
+                            ? `[Bitget] ${market} ${position} 진입 완료 (SL: ${slPercent * 100}%)`
+                            : `[Bitget] ${market} ${position} 진입 완료`;
+
+                    this.logger.log(logMessage);
+                    await this.notificationService.send(logMessage);
                 } catch (e: any) {
                     this.logger.error(e);
                     await this.notificationService.send(`[Bitget] 진입 실패: ${e.message}`);
