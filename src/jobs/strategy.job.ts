@@ -41,7 +41,7 @@ export class StrategyJob implements OnModuleInit {
     ) {}
 
     onModuleInit() {
-        if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV === 'production') {
             // --- Configuration Area ---
             this.holdHour({ hour: 5, second: 2, top: 1, askPercent: 0.1 });
 
@@ -147,35 +147,50 @@ export class StrategyJob implements OnModuleInit {
         const jobNameBase = `bitgetHoldHour-${hour}-${second}`;
 
         // 1. Open Job
-        const openJob = new CronJob(`${second} 1 ${hour} * * *`, async () => {
-            try {
-                const result = await this.bitgetOrderService.openBitgetMarket(top, position, slPercent);
-                market = result.market;
-                this.logger.log(`[Bitget] ${market} ${position} 진입 완료 (SL: ${slPercent * 100}%)`);
-                await this.notificationService.send(`[Bitget] ${market} ${position} 진입 완료`);
-            } catch (e: any) {
-                this.logger.error(e);
-                await this.notificationService.send(`[Bitget] 진입 실패: ${e.message}`);
-            }
-        });
+        const openJob = new CronJob(
+            `${second} 1 ${hour} * * *`,
+            async () => {
+                this.logger.log(`bitget test`);
+                try {
+                    const result = await this.bitgetOrderService.openBitgetMarket(top, position, slPercent);
+                    market = result.market;
+                    this.logger.log(`[Bitget] ${market} ${position} 진입 완료 (SL: ${slPercent * 100}%)`);
+                    await this.notificationService.send(`[Bitget] ${market} ${position} 진입 완료`);
+                } catch (e: any) {
+                    this.logger.error(e);
+                    await this.notificationService.send(`[Bitget] 진입 실패: ${e.message}`);
+                }
+            },
+            null,
+            false,
+            'Asia/Seoul',
+        );
         this.schedulerRegistry.addCronJob(`${jobNameBase}-open`, openJob);
         openJob.start();
+        this.logger.log(`[${jobNameBase}-open] Next run: ${openJob.nextDate().toString()}`);
 
         // 2. Force Close Job
-        const forceCloseJob = new CronJob(`${second} 1 ${(hour + duringHour) % 24} * * *`, async () => {
-            try {
-                if (market) {
-                    await this.bitgetOrderService.closeBitgetMarket(market);
-                    this.logger.log(`[Bitget] ${market} 포지션 종료 완료`);
-                    await this.notificationService.send(`[Bitget] ${market} 포지션 종료 완료`);
+        const forceCloseJob = new CronJob(
+            `${second} 1 ${(hour + duringHour) % 24} * * *`,
+            async () => {
+                try {
+                    if (market) {
+                        await this.bitgetOrderService.closeBitgetMarket(market);
+                        this.logger.log(`[Bitget] ${market} 포지션 종료 완료`);
+                        await this.notificationService.send(`[Bitget] ${market} 포지션 종료 완료`);
+                    }
+                } catch (e: any) {
+                    this.logger.error(e);
+                    await this.notificationService.send(`[Bitget] 포지션 종료 실패: ${e.message}`);
                 }
-            } catch (e: any) {
-                this.logger.error(e);
-                await this.notificationService.send(`[Bitget] 포지션 종료 실패: ${e.message}`);
-            }
-        });
+            },
+            null,
+            false,
+            'Asia/Seoul',
+        );
         this.schedulerRegistry.addCronJob(`${jobNameBase}-close`, forceCloseJob);
         forceCloseJob.start();
+        this.logger.log(`[${jobNameBase}-close] Next run: ${forceCloseJob.nextDate().toString()}`);
     }
 
     upbitHoldHour({ hour, second = 0, duringHour = 1, top = 1, askPercent }: HoldHourOptions) {
