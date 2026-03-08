@@ -44,9 +44,14 @@ export class StrategyJob implements OnModuleInit {
         if (process.env.NODE_ENV === 'production') {
             // --- Configuration Area ---
             this.holdHour({ hour: 5, second: 2, top: 1, askPercent: 0.1 });
+
             this.upbitHoldHour({ hour: 4, second: 2, top: 1, askPercent: 0.1 });
             this.upbitHoldHour({ hour: 17, second: 2, top: 1, askPercent: 0.1 });
-            // this.bitgetHoldHour({ hour: 9, top: 1, position: 'LONG', slPercent: 0.05 });
+
+            this.bitgetHoldHour({ hour: 0, top: 4, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 8, top: 3, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 11, top: 5, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 17, top: 1, position: 'SHORT', slPercent: 10 });
         }
     }
 
