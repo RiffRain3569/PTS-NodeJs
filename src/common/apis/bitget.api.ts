@@ -23,6 +23,19 @@ export const getSpotTickers = async () => {
     });
 };
 
+type GetContractsTypes = {
+    productType: string;
+    symbol?: string;
+};
+
+export const getContracts = async ({ ...rest }: GetContractsTypes) => {
+    return await bitgetApi({
+        uri: `/api/v2/mix/market/contracts`,
+        method: GET,
+        reqData: rest,
+    });
+};
+
 export const getCandle = async ({
     symbol,
     granularity,

@@ -1,6 +1,7 @@
 import {
     getAllPosition,
     getAccount as getBitgetAccount,
+    getContracts as getBitgetContracts,
     getTicker as getBitgetTicker,
     postOrder as postBitgetOrder,
     postFlashClosePosition,
@@ -56,17 +57,26 @@ export class BitgetOrderService {
         const side: SideType = position === 'SHORT' ? 'sell' : 'buy';
         const orderPrice = side === 'sell' ? askPrice : bidPrice;
 
-        // Minimum order value logic (ensure > 5 USDT)
-        let inputMargin = crossedMaxAvailable - 2; // buffer 2 USDT
+        // Fetch contract details to safely format size
+        const contractRes = await getBitgetContracts({ symbol: blockchainSymbol, productType: 'USDT-FUTURES' });
+        const contractInfo = contractRes.data[0];
+        const sizeMultiplier = Number(contractInfo?.sizeMultiplier || 1);
+        const volumePlace = Number(contractInfo?.volumePlace || 4);
+
+        // Market orders require a buffer margin (~5%). Use 95% of available balance.
+        let inputMargin = crossedMaxAvailable * 0.95;
         const minOrderValue = 5.5;
 
         if (inputMargin * leverage < minOrderValue) {
             const requiredMargin = minOrderValue / leverage;
-            inputMargin = crossedMaxAvailable >= requiredMargin ? requiredMargin : crossedMaxAvailable;
+            inputMargin = crossedMaxAvailable >= requiredMargin ? requiredMargin : crossedMaxAvailable * 0.99;
         }
 
-        const size = (inputMargin * leverage) / orderPrice;
-        const formattedSize = Math.floor(size * 1000000) / 1000000;
+        let size = (inputMargin * leverage) / orderPrice;
+
+        // Ensure size is a multiple of sizeMultiplier and follows volumePlace
+        size = Math.floor(size / sizeMultiplier) * sizeMultiplier;
+        const formattedSize = Number(size.toFixed(volumePlace));
 
         if (formattedSize <= 0) {
             throw new Error(`Calculated size is too small: ${formattedSize}`);
@@ -158,19 +168,28 @@ export class BitgetOrderService {
             const side: SideType = message === 'SHORT' ? 'sell' : 'buy';
             const orderPrice = side === 'sell' ? askPrice : bidPrice;
 
-            // 최소 주문 금액 5USDT 보장 로직
-            let inputMargin = crossedMaxAvailable - 2; // 여유버퍼 2USDT
+            // 추가: Contract 정보 불러와서 size 기준 적용 (지수화 및 소수점)
+            const contractRes = await getBitgetContracts({ symbol: blockchainSymbol, productType: 'USDT-FUTURES' });
+            const contractInfo = contractRes.data[0];
+            const sizeMultiplier = Number(contractInfo?.sizeMultiplier || 1);
+            const volumePlace = Number(contractInfo?.volumePlace || 4);
+
+            // 시장가 주문 시 슬리피지/마진을 대비해 가용 마진의 95%만 사용
+            let inputMargin = crossedMaxAvailable * 0.95;
             const minOrderValue = 5.5; // 최소 주문 가치 (여유있게 5.5)
 
             // 주문 가치가 최소값보다 작으면 마진을 조정
             if (inputMargin * leverage < minOrderValue) {
                 const requiredMargin = minOrderValue / leverage;
-                // 잔고가 충분하면 최소 마진으로 설정, 부족하면 전액 사용 (API 에러 발생 가능성 있음)
-                inputMargin = crossedMaxAvailable >= requiredMargin ? requiredMargin : crossedMaxAvailable;
+                // 잔고가 충분하면 최소 마진으로 설정, 부족하면 전액(99%) 사용 (API 에러 발생 가능성 있음)
+                inputMargin = crossedMaxAvailable >= requiredMargin ? requiredMargin : crossedMaxAvailable * 0.99;
             }
 
-            const size = (inputMargin * leverage) / orderPrice;
-            const formattedSize = Math.floor(size * 1000000) / 1000000; // 소수점 6자리 버림
+            let size = (inputMargin * leverage) / orderPrice;
+
+            // sizeMultiplier 배수 적용 및 소수점 자리(volumePlace) 제한
+            size = Math.floor(size / sizeMultiplier) * sizeMultiplier;
+            const formattedSize = Number(size.toFixed(volumePlace));
 
             if (formattedSize <= 0) {
                 console.error(`[Bitget Order Error] Calculated size is 0 or less. skipping.`);
