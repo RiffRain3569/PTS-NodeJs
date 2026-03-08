@@ -148,7 +148,7 @@ export class StrategyJob implements OnModuleInit {
 
         // 1. Open Job
         const openJob = new CronJob(
-            `${second} 16 ${hour} * * *`,
+            `${second} 1 ${hour} * * *`,
             async () => {
                 this.logger.log(`bitget test`);
                 try {
