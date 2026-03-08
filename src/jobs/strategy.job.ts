@@ -41,30 +41,29 @@ export class StrategyJob implements OnModuleInit {
     ) {}
 
     onModuleInit() {
-        if (process.env.NODE_ENV === 'production') {
+        if (process.env.NODE_ENV !== 'production') {
             // --- Configuration Area ---
             this.holdHour({ hour: 5, second: 2, top: 1, askPercent: 0.1 });
 
             this.upbitHoldHour({ hour: 4, second: 2, top: 1, askPercent: 0.1 });
             this.upbitHoldHour({ hour: 17, second: 2, top: 1, askPercent: 0.1 });
 
-            this.bitgetHoldHour({ hour: 5, top: 1, position: 'LONG', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 10, top: 1, position: 'LONG', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 11, top: 1, position: 'LONG', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 12, top: 2, position: 'LONG', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 15, top: 1, position: 'LONG', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 18, top: 3, position: 'LONG', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 5, second: 5, top: 1, position: 'LONG', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 10, second: 5, top: 1, position: 'LONG', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 12, second: 5, top: 2, position: 'LONG', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 15, second: 5, top: 1, position: 'LONG', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 18, second: 5, top: 3, position: 'LONG', slPercent: 10 });
 
-            this.bitgetHoldHour({ hour: 0, top: 4, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 1, top: 5, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 3, top: 3, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 4, top: 1, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 6, top: 1, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 8, top: 3, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 11, top: 2, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 13, top: 1, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 17, top: 1, position: 'SHORT', slPercent: 10 });
-            this.bitgetHoldHour({ hour: 19, top: 1, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 0, second: 5, top: 4, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 1, second: 5, top: 5, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 3, second: 5, top: 3, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 4, second: 5, top: 1, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 6, second: 5, top: 1, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 8, second: 5, top: 3, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 11, second: 5, top: 2, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 13, second: 5, top: 1, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 17, second: 5, top: 1, position: 'SHORT', slPercent: 10 });
+            this.bitgetHoldHour({ hour: 19, second: 5, top: 1, position: 'SHORT', slPercent: 10 });
         }
     }
 
