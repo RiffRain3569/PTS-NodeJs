@@ -33,7 +33,7 @@ export class BitgetOrderService {
             symbol: blockchainSymbol,
             productType: 'USDT-FUTURES',
             marginCoin: 'USDT',
-            leverage: '3',
+            leverage: '1',
         });
 
         // 3. Get Price & Account Info
