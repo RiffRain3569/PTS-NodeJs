@@ -49,6 +49,7 @@ export class StrategyJob implements OnModuleInit {
             this.upbitHoldHour({ hour: 17, second: 2, top: 1, askPercent: 0.1 });
 
             this.bitgetHoldHour({ hour: 5, second: 5, top: 1, position: 'LONG' });
+            this.bitgetHoldHour({ hour: 7, second: 5, top: 1, position: 'LONG' });
             this.bitgetHoldHour({ hour: 10, second: 5, top: 1, position: 'LONG' });
             this.bitgetHoldHour({ hour: 12, second: 5, top: 2, position: 'LONG' });
             this.bitgetHoldHour({ hour: 15, second: 5, top: 1, position: 'LONG' });
@@ -59,7 +60,7 @@ export class StrategyJob implements OnModuleInit {
             this.bitgetHoldHour({ hour: 3, second: 5, top: 3, position: 'SHORT' });
             this.bitgetHoldHour({ hour: 4, second: 5, top: 1, position: 'SHORT' });
             this.bitgetHoldHour({ hour: 6, second: 5, top: 1, position: 'SHORT' });
-            this.bitgetHoldHour({ hour: 8, second: 5, top: 3, position: 'SHORT' });
+            this.bitgetHoldHour({ hour: 8, second: 5, top: 4, position: 'SHORT' });
             this.bitgetHoldHour({ hour: 11, second: 5, top: 2, position: 'SHORT' });
             this.bitgetHoldHour({ hour: 13, second: 5, top: 1, position: 'SHORT' });
             this.bitgetHoldHour({ hour: 17, second: 5, top: 1, position: 'SHORT' });
