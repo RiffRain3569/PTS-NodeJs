@@ -23,6 +23,14 @@ export const getSpotTickers = async () => {
     });
 };
 
+export const getFuturesTickers = async () => {
+    return await bitgetApi({
+        uri: `/api/v2/mix/market/tickers`,
+        method: GET,
+        reqData: { productType: 'USDT-FUTURES' },
+    });
+};
+
 type GetContractsTypes = {
     productType: string;
     symbol?: string;

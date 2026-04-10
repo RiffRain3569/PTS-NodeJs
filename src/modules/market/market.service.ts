@@ -1,4 +1,4 @@
-import { getCandle, getSpotTickers } from '@/common/apis/bitget.api';
+import { getCandle, getFuturesTickers } from '@/common/apis/bitget.api';
 import { getCandleMinute, getMarket, getTicker } from '@/common/apis/bithumb.api';
 import { getUpbitCandles, getUpbitMarkets, getUpbitTicker } from '@/common/apis/upbit.api';
 import { Injectable } from '@nestjs/common';
@@ -79,7 +79,7 @@ export class MarketService {
     }
 
     async getBitgetTop5Markets() {
-        const response = await getSpotTickers();
+        const response = await getFuturesTickers();
         if (response.code !== '00000') {
             throw new Error(response.msg || 'Bitget API Error');
         }
