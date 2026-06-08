@@ -14,7 +14,7 @@ import { Injectable } from '@nestjs/common';
 export class BithumbOrderService {
     constructor(private readonly marketService: MarketService) {}
 
-    async bidBithumbTop(num: number) {
+    async bidBithumbTop(num: number, splitCount: number = 1) {
         const apiKey = process.env.API_KEY as string;
         const secret = process.env.SECRET_KEY as string;
         const markets = await this.marketService.getTop5Markets();
@@ -31,16 +31,22 @@ export class BithumbOrderService {
         const data = await getBithumbOrder({ market: targetMarket?.market, apiKey, secret });
         const bidFee = data?.bid_fee;
         const bidPrice = Math.floor(krwPerMarket) - Math.ceil(krwPerMarket * bidFee) - 1;
+        const splitPrice = Math.floor(bidPrice / splitCount);
 
-        await postBithumbOrder({
-            market: targetMarket.market,
-            side: 'bid',
-            volume: '',
-            price: `${bidPrice}`,
-            ord_type: 'price',
-            apiKey,
-            secret,
-        });
+        for (let i = 0; i < splitCount; i++) {
+            await postBithumbOrder({
+                market: targetMarket.market,
+                side: 'bid',
+                volume: '',
+                price: `${splitPrice}`,
+                ord_type: 'price',
+                apiKey,
+                secret,
+            });
+            if (i < splitCount - 1) {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+        }
         return targetMarket;
     }
 

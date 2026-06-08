@@ -15,6 +15,7 @@ interface HoldHourOptions {
     top?: number;
     askPercent: number;
     position?: 'LONG' | 'SHORT';
+    splitCount?: number;
 }
 
 interface BitgetHoldHourOptions {
@@ -43,7 +44,7 @@ export class StrategyJob implements OnModuleInit {
     onModuleInit() {
         if (process.env.NODE_ENV === 'production') {
             // --- Configuration Area ---
-            this.holdHour({ hour: 5, second: 2, top: 1, askPercent: 0.1 });
+            this.holdHour({ hour: 5, second: 2, top: 1, askPercent: 0.1, splitCount: 3 });
 
             this.upbitHoldHour({ hour: 4, second: 2, top: 1, askPercent: 0.1 });
 
@@ -51,7 +52,7 @@ export class StrategyJob implements OnModuleInit {
         }
     }
 
-    holdHour({ hour, second = 0, duringHour = 2, top = 1, askPercent }: HoldHourOptions) {
+    holdHour({ hour, second = 0, duringHour = 2, top = 1, askPercent, splitCount = 1 }: HoldHourOptions) {
         console.log('holdHour options:', { hour, second, duringHour, top, askPercent });
         console.log('Current Process Time:', new Date().toString());
 
@@ -65,7 +66,7 @@ export class StrategyJob implements OnModuleInit {
                 console.log('buyAndSellJob triggered', new Date().toString());
                 try {
                     // 1-1. Buy
-                    market = await this.bithumbOrderService.bidBithumbTop(top);
+                    market = await this.bithumbOrderService.bidBithumbTop(top, splitCount);
                     this.logger.log(`${market.korean_name} 매수 완료`);
                     await this.notificationService.send(`${market.korean_name} 매수 완료`);
 
