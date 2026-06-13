@@ -48,7 +48,7 @@ export class StrategyJob implements OnModuleInit {
 
             this.upbitHoldHour({ hour: 4, second: 2, top: 1, askPercent: 0.1 });
 
-            this.bitgetHoldHour({ hour: 4, second: 5, top: 1, position: 'LONG' });
+            // this.bitgetHoldHour({ hour: 4, second: 5, top: 1, position: 'LONG' });
         }
     }
 
