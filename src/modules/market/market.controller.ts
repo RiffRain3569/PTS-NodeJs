@@ -319,21 +319,17 @@ function ensureAudioCtx() {
 }
 function playAlertSound() {
     if (!audioCtx) return;
-    // 3회 반복 비프음
-    for (let i = 0; i < 3; i++) {
-        const offset = i * 0.3;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(1000, audioCtx.currentTime + offset);
-        osc.frequency.setValueAtTime(1400, audioCtx.currentTime + offset + 0.1);
-        gain.gain.setValueAtTime(1.0, audioCtx.currentTime + offset);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + offset + 0.25);
-        osc.start(audioCtx.currentTime + offset);
-        osc.stop(audioCtx.currentTime + offset + 0.25);
-    }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(1400, audioCtx.currentTime + 0.1);
+    gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.25);
 }
 
 // --- 자동 스캔 알림 ---
