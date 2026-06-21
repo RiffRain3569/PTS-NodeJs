@@ -357,17 +357,10 @@ async function startAlert() {
         return;
     }
 
-    playAlertSound();
-
     alertRunning = true;
     const btn = document.getElementById('alertBtn');
     btn.textContent = '알림 중지';
     btn.style.background = '#4caf50';
-
-    // 테스트 알림
-    new Notification('MA 스캐너 알림 활성화', {
-        body: '60초 간격으로 스캔합니다. 신규 정배열/역배열 감지 시 알림.',
-    });
 
     // 즉시 1회 실행 + 60초 간격
     runAlertScan();
