@@ -208,10 +208,10 @@ export class MarketController {
 
 <script>
 const SECTIONS = [
-    { position: 'LONG', label: 'LONG 정배열', durLabel: '15분 이내', min: 0, max: 15 },
-    { position: 'SHORT', label: 'SHORT 역배열', durLabel: '15분 이내', min: 0, max: 15 },
-    { position: 'LONG', label: 'LONG 정배열', durLabel: '15분 초과', min: 16, max: 9999 },
-    { position: 'SHORT', label: 'SHORT 역배열', durLabel: '15분 초과', min: 16, max: 9999 },
+    { position: 'LONG', label: 'LONG 정배열', durLabel: '20분 이내', min: 0, max: 20 },
+    { position: 'SHORT', label: 'SHORT 역배열', durLabel: '20분 이내', min: 0, max: 20 },
+    { position: 'LONG', label: 'LONG 정배열', durLabel: '20분 초과', min: 21, max: 9999 },
+    { position: 'SHORT', label: 'SHORT 역배열', durLabel: '20분 초과', min: 21, max: 9999 },
 ];
 
 async function startScan() {
