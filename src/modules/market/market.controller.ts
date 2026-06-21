@@ -334,6 +334,11 @@ async function startAlert() {
     btn.textContent = '알림 중지';
     btn.style.background = '#4caf50';
 
+    // 테스트 알림
+    new Notification('MA 스캐너 알림 활성화', {
+        body: '60초 간격으로 스캔합니다. 신규 정배열/역배열 감지 시 알림.',
+    });
+
     // 즉시 1회 실행 + 60초 간격
     runAlertScan();
     alertInterval = setInterval(runAlertScan, 60000);
@@ -363,7 +368,10 @@ async function runAlertScan() {
         if (json.error) throw new Error(json.error);
 
         const data = json.data || [];
-        const newCoins = data.filter(d => d.duration_min <= 1);
+        // 캔들 기준 1캔들 경과 = 신규 진입 (1m→1분, 5m→5분, 15m→15분)
+        const granMinutes = { '1m': 1, '5m': 5, '15m': 15 };
+        const threshold = granMinutes[granularity] || 1;
+        const newCoins = data.filter(d => d.duration_min <= threshold);
 
         const scannedAt = new Date(json.scanned_at).toLocaleTimeString('ko-KR');
         statusEl.className = 'status done';
