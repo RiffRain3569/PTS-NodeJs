@@ -349,6 +349,9 @@ function toggleAlert() {
 }
 
 async function startAlert() {
+    // user gesture에서 즉시 AudioContext 초기화 (await 전에 해야 함)
+    ensureAudioCtx();
+
     // 브라우저 알림 권한 요청
     if (Notification.permission === 'default') {
         await Notification.requestPermission();
@@ -358,8 +361,6 @@ async function startAlert() {
         return;
     }
 
-    // user gesture에서 AudioContext 초기화
-    ensureAudioCtx();
     playAlertSound();
 
     alertRunning = true;
