@@ -357,13 +357,15 @@ async function startAlert() {
         return;
     }
 
+    playAlertSound();
+
     alertRunning = true;
     const btn = document.getElementById('alertBtn');
     btn.textContent = '알림 중지';
     btn.style.background = '#4caf50';
 
-    // 즉시 1회 실행 + 60초 간격
-    runAlertScan();
+    // 즉시 1회 실행 (소리 없이 화면만 갱신) + 60초 간격
+    runAlertScan(true);
     alertInterval = setInterval(runAlertScan, 60000);
 }
 
@@ -376,7 +378,7 @@ function stopAlert() {
     btn.style.background = '#a51d2d';
 }
 
-async function runAlertScan() {
+async function runAlertScan(silent = false) {
     const statusEl = document.getElementById('status');
     const granularity = document.getElementById('granularity').value;
     const minVolume = document.getElementById('minVolume').value || 5000000;
@@ -403,8 +405,8 @@ async function runAlertScan() {
         // 결과도 화면에 반영
         renderSections(data);
 
-        // 신규 감지 시 데스크톱 알림
-        if (newCoins.length > 0) {
+        // 신규 감지 시 데스크톱 알림 (첫 실행은 silent)
+        if (newCoins.length > 0 && !silent) {
             const longCoins = newCoins.filter(d => d.position === 'LONG');
             const shortCoins = newCoins.filter(d => d.position === 'SHORT');
             let body = '';
