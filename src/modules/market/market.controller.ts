@@ -307,6 +307,23 @@ function formatVolume(v) {
     return v.toFixed(0);
 }
 
+// --- 알림 사운드 ---
+function playAlertSound() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+}
+
 // --- 자동 스캔 알림 ---
 let alertInterval = null;
 let alertRunning = false;
@@ -388,6 +405,7 @@ async function runAlertScan() {
             if (longCoins.length > 0) body += 'LONG: ' + longCoins.map(d => d.symbol.replace('USDT','')).join(', ') + '\\n';
             if (shortCoins.length > 0) body += 'SHORT: ' + shortCoins.map(d => d.symbol.replace('USDT','')).join(', ');
 
+            playAlertSound();
             new Notification('MA 정배열 신규 감지 (' + newCoins.length + '개)', {
                 body: body,
                 icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📊</text></svg>',
