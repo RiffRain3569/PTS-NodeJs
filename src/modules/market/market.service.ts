@@ -1,4 +1,4 @@
-import { getCandle, getFuturesTickers } from '@/common/apis/bitget.api';
+import { getCandle, getCandlesRecent, getContracts, getFuturesTickers } from '@/common/apis/bitget.api';
 import { getCandleMinute, getMarket, getTicker } from '@/common/apis/bithumb.api';
 import { getUpbitCandles, getUpbitMarkets, getUpbitTicker } from '@/common/apis/upbit.api';
 import { Injectable } from '@nestjs/common';
@@ -79,6 +79,140 @@ export class MarketService {
     }
 
     async getBitgetTop5Markets() {
+        return this.getBitgetTopMarkets(5);
+    }
+
+    async scanMaAlignment(position: 'LONG' | 'SHORT' = 'LONG', minVolume: number = 5_000_000) {
+        const result = await this.scanMaAlignmentAll(minVolume);
+        return result.filter((d: any) => d.position === position).sort((a: any, b: any) => b.strength - a.strength);
+    }
+
+    async scanMaAlignmentAll(minVolume: number = 5_000_000, granularity: string = '1m', maxLever: number = 0) {
+        // 1. Get all USDT futures tickers
+        const tickersRes = await getFuturesTickers();
+        if (tickersRes.code !== '00000') {
+            throw new Error(tickersRes.msg || 'Bitget API Error');
+        }
+
+        const allTickers: any[] = tickersRes.data.filter((m: any) => m.symbol.endsWith('USDT'));
+
+        // 2. Filter by max leverage (contract info)
+        let leverFilterSet: Set<string> | null = null;
+        if (maxLever > 0) {
+            const contractsRes = await getContracts({ productType: 'USDT-FUTURES' });
+            if (contractsRes.code === '00000') {
+                leverFilterSet = new Set(
+                    contractsRes.data
+                        .filter((c: any) => Number(c.maxLever) <= maxLever)
+                        .map((c: any) => c.symbol),
+                );
+            }
+        }
+
+        // 3. Filter by minimum 24h USDT volume + leverage
+        const filtered = allTickers
+            .filter((m: any) => parseFloat(m.usdtVolume) >= minVolume)
+            .filter((m: any) => !leverFilterSet || leverFilterSet.has(m.symbol))
+            .sort((a: any, b: any) => parseFloat(b.usdtVolume) - parseFloat(a.usdtVolume));
+
+        // 3. Fetch 1m candles (200개: MA120 계산 + 최대 80분 역추적 가능)
+        const concurrency = 10;
+        const aligned: any[] = [];
+
+        for (let i = 0; i < filtered.length; i += concurrency) {
+            const chunk = filtered.slice(i, i + concurrency);
+            const chunkResults = await Promise.all(
+                chunk.map(async (m: any) => {
+                    try {
+                        const res = await getCandlesRecent({ symbol: m.symbol, granularity, limit: 200 });
+                        if (!res || res.code !== '00000' || !res.data?.length) return null;
+
+                        // Bitget returns candles oldest-first
+                        const closes: number[] = res.data
+                            .map((c: any[]) => parseFloat(c[4]));
+
+                        if (closes.length < 120) return null;
+
+                        // Compute MA at the latest position
+                        const maAt = (pos: number, period: number) => {
+                            const start = pos - period + 1;
+                            if (start < 0) return NaN;
+                            let sum = 0;
+                            for (let j = start; j <= pos; j++) sum += closes[j];
+                            return sum / period;
+                        };
+
+                        const lastIdx = closes.length - 1;
+                        const ma30 = maAt(lastIdx, 30);
+                        const ma60 = maAt(lastIdx, 60);
+                        const ma90 = maAt(lastIdx, 90);
+                        const ma120 = maAt(lastIdx, 120);
+                        const currentPrice = closes[lastIdx];
+
+                        const isLongAligned = ma30 > ma60 && ma60 > ma90 && ma90 > ma120;
+                        const isShortAligned = ma30 < ma60 && ma60 < ma90 && ma90 < ma120;
+
+                        if (!isLongAligned && !isShortAligned) return null;
+
+                        const position = isLongAligned ? 'LONG' : 'SHORT';
+
+                        // 4. Duration: 역추적 - 조건이 깨지는 지점 찾기
+                        let duration = 0;
+                        for (let k = 1; k <= lastIdx - 119; k++) {
+                            const pos = lastIdx - k;
+                            const m30 = maAt(pos, 30);
+                            const m60 = maAt(pos, 60);
+                            const m90 = maAt(pos, 90);
+                            const m120 = maAt(pos, 120);
+                            if (isNaN(m120)) break;
+
+                            const stillAligned =
+                                position === 'LONG'
+                                    ? m30 > m60 && m60 > m90 && m90 > m120
+                                    : m30 < m60 && m60 < m90 && m90 < m120;
+
+                            if (!stillAligned) {
+                                duration = k;
+                                break;
+                            }
+                        }
+                        // If never broke within our data range
+                        if (duration === 0) duration = lastIdx - 119;
+
+                        const strength =
+                            position === 'LONG'
+                                ? ((ma30 - ma120) / ma120) * 100
+                                : ((ma120 - ma30) / ma120) * 100;
+
+                        // 캔들 수 → 분 환산
+                        const candleMinutes: Record<string, number> = { '1m': 1, '5m': 5, '15m': 15 };
+                        const minutesPerCandle = candleMinutes[granularity] || 1;
+
+                        return {
+                            symbol: m.symbol,
+                            position,
+                            current_price: currentPrice,
+                            change_24h: (parseFloat(m.change24h) * 100).toFixed(2),
+                            volume_24h_usdt: parseFloat(m.usdtVolume),
+                            ma30: parseFloat(ma30.toFixed(6)),
+                            ma60: parseFloat(ma60.toFixed(6)),
+                            ma90: parseFloat(ma90.toFixed(6)),
+                            ma120: parseFloat(ma120.toFixed(6)),
+                            strength: parseFloat(strength.toFixed(4)),
+                            duration_min: duration * minutesPerCandle,
+                        };
+                    } catch {
+                        return null;
+                    }
+                }),
+            );
+            aligned.push(...chunkResults.filter(Boolean));
+        }
+
+        return aligned;
+    }
+
+    async getBitgetTopMarkets(topN: number = 5) {
         const response = await getFuturesTickers();
         if (response.code !== '00000') {
             throw new Error(response.msg || 'Bitget API Error');
@@ -91,11 +225,15 @@ export class MarketService {
             return parseFloat(b.change24h) - parseFloat(a.change24h);
         });
 
-        return sortedList.slice(0, 5).map((m: any) => {
+        return sortedList.slice(0, topN).map((m: any, index: number) => {
             return {
+                rank: index + 1,
                 market: m.symbol,
                 trade_price: m.lastPr,
                 change_rate: `${(parseFloat(m.change24h) * 100).toFixed(2)}%`,
+                change_rate_raw: parseFloat(m.change24h) * 100,
+                open_utc_time: m.openUtc0,
+                volume_24h: m.usdtVolume,
             };
         });
     }

@@ -44,6 +44,36 @@ export const getContracts = async ({ ...rest }: GetContractsTypes) => {
     });
 };
 
+export const getCandlesRecent = async ({
+    symbol,
+    granularity = '1m',
+    limit = 200,
+    productType = 'usdt-futures',
+}: {
+    symbol: string;
+    granularity?: string;
+    limit?: number;
+    productType?: string;
+}) => {
+    // granularity에 따라 캔들 하나당 시간(ms) 계산
+    const granularityMs: Record<string, number> = { '1m': 60000, '5m': 300000, '15m': 900000 };
+    const candleMs = granularityMs[granularity] || 60000;
+    const endTime = Date.now();
+    const startTime = endTime - limit * candleMs;
+    return await bitgetApi({
+        uri: `/api/v2/mix/market/candles`,
+        method: GET,
+        reqData: {
+            symbol,
+            granularity,
+            startTime: startTime.toString(),
+            endTime: endTime.toString(),
+            productType,
+            limit: limit.toString(),
+        },
+    });
+};
+
 export const getCandle = async ({
     symbol,
     granularity,
