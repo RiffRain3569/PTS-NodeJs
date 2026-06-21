@@ -192,7 +192,7 @@ export class MarketController {
         </div>
         <div>
             <label>최소 거래량 (USDT)</label>
-            <input type="number" id="minVolume" value="5000000" step="1000000" min="0" style="width:140px">
+            <input type="number" id="minVolume" value="4500000" step="1000000" min="0" style="width:140px">
         </div>
         <button id="scanBtn" onclick="startScan()">스캔 시작</button>
         <button id="alertBtn" onclick="toggleAlert()">알림 시작</button>
