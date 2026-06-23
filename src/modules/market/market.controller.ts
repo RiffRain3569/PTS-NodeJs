@@ -34,7 +34,10 @@ export class MarketController {
             const minVolume = query.minVolume ? parseFloat(query.minVolume) : 5_000_000;
             const granularity = ['1m', '5m', '15m'].includes(query.granularity) ? query.granularity : '1m';
             const maxLever = query.maxLever ? parseInt(query.maxLever, 10) : 0;
-            const data = await this.marketService.scanMaAlignmentAll(minVolume, granularity, maxLever);
+            const blacklist: string[] = query.blacklist
+                ? query.blacklist.split(',').map((s: string) => s.trim().toUpperCase()).filter(Boolean)
+                : [];
+            const data = await this.marketService.scanMaAlignmentAll(minVolume, granularity, maxLever, blacklist);
             res.json({ count: data.length, scanned_at: new Date().toISOString(), granularity, data });
         } catch (error: any) {
             console.error(error);
@@ -195,6 +198,10 @@ export class MarketController {
             <label>최소 거래량 (USDT)</label>
             <input type="number" id="minVolume" value="4500000" step="1000000" min="0" style="width:140px">
         </div>
+        <div>
+            <label>제외 코인</label>
+            <input type="text" id="blacklist" value="DRAM,QQQ" placeholder="DRAM,QQQ,..." style="width:200px;padding:8px 10px;background:#332f33;border:1px solid #555;border-radius:4px;color:#fff;font-size:14px;">
+        </div>
         <button id="scanBtn" onclick="startScan()">스캔 시작</button>
         <button id="alertBtn" onclick="toggleAlert()">알림 시작</button>
         <span class="status" id="status">대기 중</span>
@@ -230,7 +237,8 @@ async function startScan() {
 
     try {
         const maxLever = document.getElementById('maxLever').value;
-        const res = await fetch('/market/futures/scan?minVolume=' + minVolume + '&granularity=' + granularity + '&maxLever=' + maxLever);
+        const blacklist = document.getElementById('blacklist').value.trim();
+        const res = await fetch('/market/futures/scan?minVolume=' + minVolume + '&granularity=' + granularity + '&maxLever=' + maxLever + (blacklist ? '&blacklist=' + encodeURIComponent(blacklist) : ''));
         const json = await res.json();
         if (json.error) throw new Error(json.error);
 
@@ -389,7 +397,8 @@ async function runAlertScan(silent = false) {
     statusEl.textContent = '알림 스캔 중...';
 
     try {
-        const res = await fetch('/market/futures/scan?minVolume=' + minVolume + '&granularity=' + granularity + '&maxLever=' + maxLever);
+        const blacklist = document.getElementById('blacklist').value.trim();
+        const res = await fetch('/market/futures/scan?minVolume=' + minVolume + '&granularity=' + granularity + '&maxLever=' + maxLever + (blacklist ? '&blacklist=' + encodeURIComponent(blacklist) : ''));
         const json = await res.json();
         if (json.error) throw new Error(json.error);
 

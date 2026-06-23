@@ -87,7 +87,7 @@ export class MarketService {
         return result.filter((d: any) => d.position === position).sort((a: any, b: any) => b.strength - a.strength);
     }
 
-    async scanMaAlignmentAll(minVolume: number = 5_000_000, granularity: string = '1m', maxLever: number = 0) {
+    async scanMaAlignmentAll(minVolume: number = 5_000_000, granularity: string = '1m', maxLever: number = 0, blacklist: string[] = []) {
         // 1. Get all USDT futures tickers
         const tickersRes = await getFuturesTickers();
         if (tickersRes.code !== '00000') {
@@ -109,10 +109,12 @@ export class MarketService {
             }
         }
 
-        // 3. Filter by minimum 24h USDT volume + leverage
+        // 3. Filter by minimum 24h USDT volume + leverage + blacklist
+        const blacklistSet = new Set(blacklist.map((s) => s.toUpperCase() + (s.endsWith('USDT') ? '' : 'USDT')));
         const filtered = allTickers
             .filter((m: any) => parseFloat(m.usdtVolume) >= minVolume)
             .filter((m: any) => !leverFilterSet || leverFilterSet.has(m.symbol))
+            .filter((m: any) => !blacklistSet.has(m.symbol))
             .sort((a: any, b: any) => parseFloat(b.usdtVolume) - parseFloat(a.usdtVolume));
 
         // 3. Fetch 1m candles (200개: MA120 계산 + 최대 80분 역추적 가능)
