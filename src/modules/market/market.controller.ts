@@ -215,6 +215,34 @@ export class MarketController {
 </div>
 
 <script>
+// --- localStorage 설정 저장/복원 ---
+const STORAGE_KEY = 'ma-scanner-settings';
+const FIELDS = ['granularity', 'maxLever', 'minVolume', 'blacklist'];
+
+function saveSettings() {
+    const settings = {};
+    FIELDS.forEach(id => { settings[id] = document.getElementById(id).value; });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+}
+
+function loadSettings() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (!saved) return;
+        FIELDS.forEach(id => {
+            if (saved[id] !== undefined) document.getElementById(id).value = saved[id];
+        });
+    } catch {}
+}
+
+loadSettings();
+
+// 설정 변경 시 자동 저장
+FIELDS.forEach(id => {
+    document.getElementById(id).addEventListener('change', saveSettings);
+    document.getElementById(id).addEventListener('input', saveSettings);
+});
+
 const SECTIONS = [
     { position: 'LONG', label: 'LONG 정배열', durLabel: '20분 이내', min: 0, max: 20 },
     { position: 'SHORT', label: 'SHORT 역배열', durLabel: '20분 이내', min: 0, max: 20 },
