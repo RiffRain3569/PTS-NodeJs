@@ -87,7 +87,7 @@ export class MarketService {
         return result.filter((d: any) => d.position === position).sort((a: any, b: any) => b.strength - a.strength);
     }
 
-    async scanMaAlignmentAll(minVolume: number = 5_000_000, granularity: string = '1m', maxLever: number = 0, blacklist: string[] = []) {
+    async scanMaAlignmentAll(minVolume: number = 5_000_000, granularity: string = '1m', maxLever: number = 0, blacklist: string[] = [], alignMode: string = 'ma4') {
         // 1. Get all USDT futures tickers
         const tickersRes = await getFuturesTickers();
         if (tickersRes.code !== '00000') {
@@ -146,13 +146,24 @@ export class MarketService {
 
                         const lastIdx = closes.length - 1;
                         const ma30 = maAt(lastIdx, 30);
-                        const ma60 = maAt(lastIdx, 60);
-                        const ma90 = maAt(lastIdx, 90);
                         const ma120 = maAt(lastIdx, 120);
                         const currentPrice = closes[lastIdx];
 
-                        const isLongAligned = ma30 > ma60 && ma60 > ma90 && ma90 > ma120;
-                        const isShortAligned = ma30 < ma60 && ma60 < ma90 && ma90 < ma120;
+                        // 정배열 조건 판별 (모드별)
+                        let isLongAligned: boolean;
+                        let isShortAligned: boolean;
+                        let ma60: number | undefined;
+                        let ma90: number | undefined;
+
+                        if (alignMode === 'close-ma') {
+                            isLongAligned = currentPrice > ma30 && ma30 > ma120;
+                            isShortAligned = currentPrice < ma30 && ma30 < ma120;
+                        } else {
+                            ma60 = maAt(lastIdx, 60);
+                            ma90 = maAt(lastIdx, 90);
+                            isLongAligned = ma30 > ma60 && ma60 > ma90 && ma90 > ma120;
+                            isShortAligned = ma30 < ma60 && ma60 < ma90 && ma90 < ma120;
+                        }
 
                         if (!isLongAligned && !isShortAligned) return null;
 
@@ -162,16 +173,25 @@ export class MarketService {
                         let duration = 0;
                         for (let k = 1; k <= lastIdx - 119; k++) {
                             const pos = lastIdx - k;
+                            const price = closes[pos];
                             const m30 = maAt(pos, 30);
-                            const m60 = maAt(pos, 60);
-                            const m90 = maAt(pos, 90);
                             const m120 = maAt(pos, 120);
                             if (isNaN(m120)) break;
 
-                            const stillAligned =
-                                position === 'LONG'
-                                    ? m30 > m60 && m60 > m90 && m90 > m120
-                                    : m30 < m60 && m60 < m90 && m90 < m120;
+                            let stillAligned: boolean;
+                            if (alignMode === 'close-ma') {
+                                stillAligned =
+                                    position === 'LONG'
+                                        ? price > m30 && m30 > m120
+                                        : price < m30 && m30 < m120;
+                            } else {
+                                const m60 = maAt(pos, 60);
+                                const m90 = maAt(pos, 90);
+                                stillAligned =
+                                    position === 'LONG'
+                                        ? m30 > m60 && m60 > m90 && m90 > m120
+                                        : m30 < m60 && m60 < m90 && m90 < m120;
+                            }
 
                             if (!stillAligned) {
                                 duration = k;
@@ -197,8 +217,8 @@ export class MarketService {
                             change_24h: (parseFloat(m.change24h) * 100).toFixed(2),
                             volume_24h_usdt: parseFloat(m.usdtVolume),
                             ma30: parseFloat(ma30.toFixed(6)),
-                            ma60: parseFloat(ma60.toFixed(6)),
-                            ma90: parseFloat(ma90.toFixed(6)),
+                            ma60: ma60 !== undefined ? parseFloat(ma60.toFixed(6)) : null,
+                            ma90: ma90 !== undefined ? parseFloat(ma90.toFixed(6)) : null,
                             ma120: parseFloat(ma120.toFixed(6)),
                             strength: parseFloat(strength.toFixed(4)),
                             duration_min: duration * minutesPerCandle,

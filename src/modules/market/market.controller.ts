@@ -37,7 +37,8 @@ export class MarketController {
             const blacklist: string[] = query.blacklist
                 ? query.blacklist.split(',').map((s: string) => s.trim().toUpperCase()).filter(Boolean)
                 : [];
-            const data = await this.marketService.scanMaAlignmentAll(minVolume, granularity, maxLever, blacklist);
+            const alignMode = query.alignMode === 'close-ma' ? 'close-ma' : 'ma4';
+            const data = await this.marketService.scanMaAlignmentAll(minVolume, granularity, maxLever, blacklist, alignMode);
             res.json({ count: data.length, scanned_at: new Date().toISOString(), granularity, data });
         } catch (error: any) {
             console.error(error);
@@ -178,6 +179,13 @@ export class MarketController {
 
     <div class="controls">
         <div>
+            <label>정배열 조건</label>
+            <select id="alignMode">
+                <option value="ma4" selected>MA30 > 60 > 90 > 120</option>
+                <option value="close-ma">종가 > MA30 > MA120</option>
+            </select>
+        </div>
+        <div>
             <label>캔들 기준</label>
             <select id="granularity">
                 <option value="1m" selected>1분봉</option>
@@ -217,7 +225,7 @@ export class MarketController {
 <script>
 // --- localStorage 설정 저장/복원 ---
 const STORAGE_KEY = 'ma-scanner-settings';
-const FIELDS = ['granularity', 'maxLever', 'minVolume', 'blacklist'];
+const FIELDS = ['alignMode', 'granularity', 'maxLever', 'minVolume', 'blacklist'];
 
 function saveSettings() {
     const settings = {};
@@ -266,7 +274,8 @@ async function startScan() {
     try {
         const maxLever = document.getElementById('maxLever').value;
         const blacklist = document.getElementById('blacklist').value.trim();
-        const res = await fetch('/market/futures/scan?minVolume=' + minVolume + '&granularity=' + granularity + '&maxLever=' + maxLever + (blacklist ? '&blacklist=' + encodeURIComponent(blacklist) : ''));
+        const alignMode = document.getElementById('alignMode').value;
+        const res = await fetch('/market/futures/scan?minVolume=' + minVolume + '&granularity=' + granularity + '&maxLever=' + maxLever + '&alignMode=' + alignMode + (blacklist ? '&blacklist=' + encodeURIComponent(blacklist) : ''));
         const json = await res.json();
         if (json.error) throw new Error(json.error);
 
@@ -426,7 +435,8 @@ async function runAlertScan(silent = false) {
 
     try {
         const blacklist = document.getElementById('blacklist').value.trim();
-        const res = await fetch('/market/futures/scan?minVolume=' + minVolume + '&granularity=' + granularity + '&maxLever=' + maxLever + (blacklist ? '&blacklist=' + encodeURIComponent(blacklist) : ''));
+        const alignMode = document.getElementById('alignMode').value;
+        const res = await fetch('/market/futures/scan?minVolume=' + minVolume + '&granularity=' + granularity + '&maxLever=' + maxLever + '&alignMode=' + alignMode + (blacklist ? '&blacklist=' + encodeURIComponent(blacklist) : ''));
         const json = await res.json();
         if (json.error) throw new Error(json.error);
 
