@@ -182,7 +182,7 @@ export class MarketController {
             <label>정배열 조건</label>
             <select id="alignMode">
                 <option value="ma4" selected>MA30 > 60 > 90 > 120</option>
-                <option value="close-ma">종가 > MA30 > MA120</option>
+                <option value="close-ma">MA30 > MA120</option>
             </select>
         </div>
         <div>

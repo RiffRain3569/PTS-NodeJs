@@ -156,8 +156,8 @@ export class MarketService {
                         let ma90: number | undefined;
 
                         if (alignMode === 'close-ma') {
-                            isLongAligned = currentPrice > ma30 && ma30 > ma120;
-                            isShortAligned = currentPrice < ma30 && ma30 < ma120;
+                            isLongAligned = ma30 > ma120;
+                            isShortAligned = ma30 < ma120;
                         } else {
                             ma60 = maAt(lastIdx, 60);
                             ma90 = maAt(lastIdx, 90);
@@ -182,8 +182,8 @@ export class MarketService {
                             if (alignMode === 'close-ma') {
                                 stillAligned =
                                     position === 'LONG'
-                                        ? price > m30 && m30 > m120
-                                        : price < m30 && m30 < m120;
+                                        ? m30 > m120
+                                        : m30 < m120;
                             } else {
                                 const m60 = maAt(pos, 60);
                                 const m90 = maAt(pos, 90);
