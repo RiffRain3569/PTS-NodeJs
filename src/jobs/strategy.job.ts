@@ -44,7 +44,7 @@ export class StrategyJob implements OnModuleInit {
     onModuleInit() {
         if (process.env.NODE_ENV === 'production') {
             // --- Configuration Area ---
-            this.holdHour({ hour: 5, second: 2, top: 1, askPercent: 0.1, splitCount: 3 });
+            this.holdHour({ hour: 4, second: 2, top: 1, askPercent: 0.1, splitCount: 3 });
 
             this.upbitHoldHour({ hour: 4, second: 2, top: 1, askPercent: 0.1 });
 
